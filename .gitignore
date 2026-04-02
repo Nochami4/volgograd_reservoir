@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated outputs
+reports/figures/
+reports/tables/
+reports/presentation/
+data/interim/
+data/processed/
+
+# Local env
+.venv/
+venv/
+.env
