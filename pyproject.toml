@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "volgograd-reservoir"
+version = "0.1.0"
+description = "Reproducible ETL pipeline for Volgograd Reservoir abrasion datasets."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy==2.2.6",
+  "openpyxl==3.1.5",
+  "pandas==2.2.3",
+  "pyarrow==20.0.0",
+  "python-dateutil==2.9.0.post0",
+  "xlrd==2.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "jupyter==1.1.1",
+  "matplotlib==3.10.1",
+  "pytest==8.3.5",
+]
+
+[tool.setuptools]
+packages = ["src", "src.analysis", "src.parsers", "src.qc", "src.viz"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
