@@ -43,6 +43,73 @@ OUTPUT_COLUMNS = [
     "source_row",
 ]
 
+DUPLICATE_COMPARE_COLUMNS = [
+    "measured_point_name",
+    "pn_name",
+    "raw_measured_distance_m",
+    "gp_to_pn_offset_m",
+    "brow_position_pn_m",
+    "brow_position_raw_m",
+    "raw_value_text",
+    "is_missing",
+    "missing_reason",
+    "source_sheet",
+]
+
+
+def build_duplicate_report(df: pd.DataFrame) -> pd.DataFrame:
+    """Describe duplicate observation keys without dropping rows silently."""
+
+    if df.empty:
+        return pd.DataFrame(
+            columns=[
+                "site_id",
+                "profile_id",
+                "obs_date",
+                "n_rows",
+                "obs_ids",
+                "source_rows",
+                "is_full_duplicate",
+                "differing_fields",
+                "resolution",
+            ]
+        )
+
+    report_rows: list[dict[str, object]] = []
+    grouped = df.groupby(["site_id", "profile_id", "obs_date"], dropna=False)
+    for key, group in grouped:
+        if len(group) <= 1:
+            continue
+
+        differing_fields = [
+            column
+            for column in DUPLICATE_COMPARE_COLUMNS
+            if group[column].fillna("__NA__").astype(str).nunique(dropna=False) > 1
+        ]
+        is_full_duplicate = len(differing_fields) == 0
+        usable_brow_count = pd.to_numeric(group["brow_position_pn_m"], errors="coerce").notna().sum()
+        if is_full_duplicate:
+            resolution = "deduplicate_possible"
+        elif pd.notna(key[2]) and usable_brow_count > 1:
+            resolution = "aggregate_same_day_raw_points"
+        else:
+            resolution = "keep_and_flag_conflict"
+        report_rows.append(
+            {
+                "site_id": key[0],
+                "profile_id": key[1],
+                "obs_date": key[2],
+                "n_rows": int(len(group)),
+                "obs_ids": ";".join(group["obs_id"].astype(str)),
+                "source_rows": ";".join(group["source_row"].astype(str)),
+                "is_full_duplicate": is_full_duplicate,
+                "differing_fields": ";".join(differing_fields) if differing_fields else None,
+                "resolution": resolution,
+            }
+        )
+
+    return pd.DataFrame(report_rows)
+
 
 def build_shoreline_observations(output_path: Path | None = None) -> Path:
     """Build `shoreline_observations.csv` and an interim parsing log."""
@@ -50,6 +117,7 @@ def build_shoreline_observations(output_path: Path | None = None) -> Path:
     source_path = find_input_file(RAW_DIR / "profiles", "*БРОВКИ*.xls")
     output_path = output_path or PROCESSED_DIR / "shoreline_observations.csv"
     log_path = INTERIM_DIR / "shoreline_observations_log.json"
+    duplicate_report_path = INTERIM_DIR / "shoreline_duplicate_report.csv"
     logger = setup_logging("build_shoreline_observations", INTERIM_DIR / "shoreline_observations.log")
 
     records: list[dict[str, object]] = []
@@ -124,17 +192,55 @@ def build_shoreline_observations(output_path: Path | None = None) -> Path:
         records.append(record)
 
     result = pd.DataFrame(records, columns=OUTPUT_COLUMNS)
+    duplicate_report = build_duplicate_report(result)
+    if not duplicate_report.empty:
+        conflicting_report = duplicate_report.loc[duplicate_report["resolution"].eq("keep_and_flag_conflict")].copy()
+        duplicate_keys = conflicting_report[["site_id", "profile_id", "obs_date"]].copy()
+    else:
+        duplicate_keys = pd.DataFrame(columns=["site_id", "profile_id", "obs_date"])
+
+    if not duplicate_keys.empty:
+        duplicate_keys["obs_date_key"] = duplicate_keys["obs_date"].fillna("__NA__").astype(str)
+        key_tuples = set(duplicate_keys[["site_id", "profile_id", "obs_date_key"]].itertuples(index=False, name=None))
+        result["obs_date_key"] = result["obs_date"].fillna("__NA__").astype(str)
+        duplicate_mask = result.apply(
+            lambda row: (row["site_id"], row["profile_id"], row["obs_date_key"]) in key_tuples,
+            axis=1,
+        )
+        result.loc[duplicate_mask, "qc_flag"] = result.loc[duplicate_mask, "qc_flag"].fillna("").map(
+            lambda value: ";".join(dict.fromkeys([part for part in [value, "DUPLICATE_OBS_KEY"] if part]))
+        )
+        result.loc[duplicate_mask, "qc_note"] = result.loc[duplicate_mask, "qc_note"].fillna("").map(
+            lambda value: " ".join(
+                dict.fromkeys(
+                    [
+                        part
+                        for part in [
+                            value,
+                            "This row shares the same (site_id, profile_id, obs_date) key with another shoreline row; see data/interim/shoreline_duplicate_report.csv.",
+                        ]
+                        if part
+                    ]
+                )
+            )
+        )
+        result = result.drop(columns=["obs_date_key"])
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(output_path, index=False)
+    duplicate_report.to_csv(duplicate_report_path, index=False)
 
     log_payload = {
         "source_file": relative_to_root(source_path),
         "output_file": relative_to_root(output_path),
+        "duplicate_report_file": relative_to_root(duplicate_report_path),
+        "duplicate_groups": int(len(duplicate_report)),
         **counters,
     }
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.write_text(json.dumps(log_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     logger.info("Built %s with %s rows", relative_to_root(output_path), len(result))
+    logger.info("Wrote shoreline duplicate report to %s", relative_to_root(duplicate_report_path))
     logger.info("Wrote shoreline parsing log to %s", relative_to_root(log_path))
     return output_path
 

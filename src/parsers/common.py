@@ -46,6 +46,21 @@ SITE_ID_MAP = {
     "Ураков Бугор": "urakov_bugor",
 }
 
+SITE_NAME_ALIASES = {
+    "пичуга южный": "pichuga_yuzhny",
+    "пичуга-южный": "pichuga_yuzhny",
+    "нижний ураков": "nizhniy_urakov",
+    "нижний балыклей": "nizhniy_balykley",
+    "новоникольское": "novonikolskoe",
+    "пролейский": "proleyskiy",
+    "суводская": "suvodskaya",
+    "молчановка": "molchanovka",
+    "бережновка": "berezhnovka",
+    "бурты": "burty",
+    "ураков бугор": "urakov_bugor",
+    "ураков бугов": "urakov_bugor",
+}
+
 ORIENTATION_TO_DEGREES = {
     "север": 0.0,
     "с": 0.0,
@@ -174,6 +189,26 @@ def normalize_site_id(name: object) -> str:
     if not fallback:
         raise ValueError(f"Could not normalize site id for {name!r}")
     return fallback
+
+
+def resolve_site_id_from_text(name: object) -> str | None:
+    """Resolve a site id from either a site id, canonical name, or known alias."""
+
+    text = clean_text(name)
+    if not text:
+        return None
+
+    if text in SITE_ID_MAP.values():
+        return text
+
+    normalized_text = re.sub(r"[\s_-]+", " ", text.lower()).strip()
+    if normalized_text in SITE_NAME_ALIASES:
+        return SITE_NAME_ALIASES[normalized_text]
+
+    try:
+        return normalize_site_id(text)
+    except ValueError:
+        return None
 
 
 def transliterate(text: str) -> str:

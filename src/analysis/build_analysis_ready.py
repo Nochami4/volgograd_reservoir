@@ -7,9 +7,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.parsers.common import PROCESSED_DIR, relative_to_root, setup_logging
+from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, relative_to_root, setup_logging
 
 LOW_COVERAGE_THRESHOLD = 0.8
+SITE_SCOPE_COLUMNS = ["site_id", "site_name", "in_project_scope", "scope_status", "scope_note"]
 
 
 def prepare_water_levels(water_df: pd.DataFrame) -> pd.DataFrame:
@@ -68,6 +69,38 @@ def aggregate_water_for_interval(interval_row: pd.Series, water_df: pd.DataFrame
     }
 
 
+def ensure_site_scope_review(sites_df: pd.DataFrame) -> pd.DataFrame:
+    """Create or refresh a manual scope-review file without filtering sites silently."""
+
+    scope_path = INTERIM_DIR / "site_scope_review.csv"
+    base_scope = sites_df[["site_id", "site_name"]].drop_duplicates().copy()
+    base_scope["in_project_scope"] = pd.NA
+    base_scope["scope_status"] = "needs_review"
+    base_scope["scope_note"] = "Auto-initialized from sites.csv; confirm whether this site is in the current project scope."
+
+    if scope_path.exists():
+        existing = pd.read_csv(scope_path, dtype=object)
+        for column in SITE_SCOPE_COLUMNS:
+            if column not in existing.columns:
+                existing[column] = pd.NA
+        scope_df = base_scope.merge(
+            existing[SITE_SCOPE_COLUMNS],
+            on=["site_id", "site_name"],
+            how="left",
+            suffixes=("_default", ""),
+        )
+        scope_df["in_project_scope"] = scope_df["in_project_scope"].combine_first(scope_df["in_project_scope_default"])
+        scope_df["scope_status"] = scope_df["scope_status"].combine_first(scope_df["scope_status_default"])
+        scope_df["scope_note"] = scope_df["scope_note"].combine_first(scope_df["scope_note_default"])
+        scope_df = scope_df[SITE_SCOPE_COLUMNS]
+    else:
+        scope_df = base_scope[SITE_SCOPE_COLUMNS]
+
+    scope_path.parent.mkdir(parents=True, exist_ok=True)
+    scope_df.to_csv(scope_path, index=False)
+    return scope_df
+
+
 def build_analysis_ready(output_path: Path | None = None) -> Path:
     """Build `analysis_ready.csv`."""
 
@@ -79,6 +112,7 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
     profiles_df = pd.read_csv(PROCESSED_DIR / "profiles.csv")
     wind_df = pd.read_csv(PROCESSED_DIR / "wind_obs_hourly.csv")
     water_df = prepare_water_levels(pd.read_csv(PROCESSED_DIR / "water_levels_raw.csv"))
+    scope_df = ensure_site_scope_review(sites_df)
 
     interval_df["date_start_dt"] = pd.to_datetime(interval_df["date_start"])
     interval_df["date_end_dt"] = pd.to_datetime(interval_df["date_end"])
@@ -90,11 +124,24 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
     merged = (
         interval_df.merge(sites_df, on="site_id", how="left", suffixes=("", "_site"))
         .merge(profiles_df, on=["site_id", "profile_id"], how="left", suffixes=("", "_profile"))
+        .merge(scope_df, on=["site_id", "site_name"], how="left")
     )
 
     wind_aggregates = merged.apply(lambda row: aggregate_wind_for_interval(row, wind_df), axis=1, result_type="expand")
     water_aggregates = merged.apply(lambda row: aggregate_water_for_interval(row, water_df), axis=1, result_type="expand")
     merged = pd.concat([merged, wind_aggregates, water_aggregates], axis=1)
+
+    wind_coverage = merged[
+        ["interval_id", "site_id", "profile_id", "date_start", "date_end", "n_wind_obs", "coverage_wind"]
+    ].copy()
+    wind_coverage["coverage_wind_flag"] = wind_coverage["coverage_wind"].map(
+        lambda value: "NO_WIND_OBS"
+        if pd.isna(value) or value == 0
+        else ("LOW_COVERAGE_WIND" if value < LOW_COVERAGE_THRESHOLD else "SUFFICIENT_COVERAGE_WIND")
+    )
+    wind_coverage_path = INTERIM_DIR / "wind_coverage_by_interval.csv"
+    wind_coverage_path.parent.mkdir(parents=True, exist_ok=True)
+    wind_coverage.to_csv(wind_coverage_path, index=False)
 
     qc_flags = []
     qc_notes = []
@@ -103,12 +150,21 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
         row_notes = []
         if pd.notna(row["coverage_wind"]) and row["coverage_wind"] < LOW_COVERAGE_THRESHOLD:
             row_flags.append("LOW_COVERAGE_WIND")
-            row_notes.append(f"Wind coverage is {row['coverage_wind']:.2f}, below the {LOW_COVERAGE_THRESHOLD:.1f} threshold.")
+            if row["n_wind_obs"] == 0:
+                row_notes.append("No wind observations fall inside this shoreline interval in the currently available local meteorological workbook.")
+            else:
+                row_notes.append(
+                    f"Wind coverage is {row['coverage_wind']:.2f}, below the {LOW_COVERAGE_THRESHOLD:.1f} threshold; interval summaries should be treated as screening-only."
+                )
         if pd.notna(row["coverage_water"]) and row["coverage_water"] < LOW_COVERAGE_THRESHOLD:
             row_flags.append("LOW_COVERAGE_WATER")
             row_notes.append(f"Water coverage is {row['coverage_water']:.2f}, below the {LOW_COVERAGE_THRESHOLD:.1f} threshold.")
         if bool(row.get("water_variable_is_ambiguous")):
             row_flags.append("AMBIGUOUS_WATER_VARIABLE")
+            row_notes.append("Water metrics use neutral `level_col_*` fields whose physical meaning is still unresolved.")
+        if str(row.get("scope_status") or "") == "needs_review":
+            row_flags.append("SITE_SCOPE_NEEDS_REVIEW")
+            row_notes.append("This site has not yet been explicitly confirmed in `data/interim/site_scope_review.csv`.")
         if pd.notna(row.get("water_qc_note")) and row["water_qc_note"]:
             row_notes.append(row["water_qc_note"])
         qc_flags.append(";".join(row_flags) if row_flags else None)

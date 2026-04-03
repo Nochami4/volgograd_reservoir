@@ -4,6 +4,8 @@ This project builds reproducible derived datasets for abrasion-prone shores of t
 
 Current dataset status: `draft`.
 
+`dataset_status: draft`
+
 ## Rules For Missing Data
 
 - Raw data in `data/raw/` are never modified.
@@ -16,6 +18,8 @@ Current dataset status: `draft`.
 - `base_points` is partially manual: semi-automatic `.doc` extraction only seeds a review template and does not replace manual checking.
 - Water-level columns remain ambiguous and therefore stay neutral as `level_col_*`.
 - Wind coverage is incomplete for many shoreline intervals, so interval-level wind summaries should be treated as screening variables only.
+- Duplicate shoreline observation keys exist and are tracked explicitly in `data/interim/shoreline_duplicate_report.csv`.
+- Site project scope is not silently filtered; review it in `data/interim/site_scope_review.csv`.
 
 ## Generated Tables
 
@@ -75,6 +79,10 @@ Current dataset status: `draft`.
 - `source_file`: relative path to the source workbook.
 - `source_sheet`: source sheet name.
 - `source_row`: original row number in the workbook.
+- Duplicate handling:
+- Potential duplicate keys by `(site_id, profile_id, obs_date)` are not dropped silently.
+- They are reported in `data/interim/shoreline_duplicate_report.csv`.
+- Conflicting duplicate-key rows receive `DUPLICATE_OBS_KEY`.
 
 ### `data/processed/wind_obs_hourly.csv`
 
@@ -109,9 +117,10 @@ Current dataset status: `draft`.
 - Columns:
 - `water_obs_id`: stable observation identifier.
 - `site_id`: normalized site id.
-- `site_name_raw`: raw site name from the sheet title.
-- `obs_year`: year extracted from the water-level block.
-- `level_col_1_m`, `level_col_2_m`, ...: neutral numeric columns retained without assigning hidden semantics.
+- `site_name`: site name normalized from the sheet title.
+- `obs_date`: intentionally empty when the source block provides year-only values.
+- `year`: year extracted from the water-level block.
+- `level_col_1_m`, `level_col_2_m`: neutral numeric columns retained without assigning hidden semantics.
 - `source_file`: relative path to the source workbook.
 - `source_sheet`: source sheet name.
 - `source_row`: original row number in the workbook.
@@ -120,6 +129,10 @@ Current dataset status: `draft`.
 - `qc_flag`: ambiguity flag when multiple numeric level columns are retained.
 - `qc_note`: explanation that neutral column names are used because semantics remain unresolved.
 - `preferred_level_col`: technically preferred neutral column by completeness only; this is not a semantic interpretation of the variable.
+- Notes:
+- This is currently a year-only hydrological layer.
+- The extraction profile is documented in `data/interim/water_levels_profile.json`.
+- A manual interpretation manifest is maintained in `data/interim/water_levels_manual_dictionary.md`.
 
 ### `data/processed/base_points.csv`
 
@@ -140,6 +153,7 @@ Current dataset status: `draft`.
 - Notes:
 - OCR-style parsing is intentionally avoided.
 - Semi-automatic candidates are staged through `data/interim/base_points_manual_template.csv` and require manual verification.
+- Unresolved rows are explicitly marked with `SITE_ID_UNRESOLVED`.
 
 ### `data/processed/interval_metrics.csv`
 
@@ -153,6 +167,8 @@ Current dataset status: `draft`.
 - `brow_pos_start_m`, `brow_pos_end_m`
 - `retreat_m`: end minus start brow position.
 - `retreat_rate_m_per_year`: retreat rate over the interval.
+- `retreat_abs_m`: absolute magnitude of the brow-position change, independent of sign.
+- `retreat_rate_abs_m_per_year`: absolute annualized magnitude of change.
 - `n_raw_points_used`: number of raw rows used across both endpoint dates.
 - `calc_method`: transparent method label.
 - `qc_flag`: QC marker when date-level aggregation or source QC is present.
@@ -161,6 +177,7 @@ Current dataset status: `draft`.
 - `retreat_m = brow_pos_end_m - brow_pos_start_m`
 - `retreat_rate_m_per_year = retreat_m / years_between`
 - The sign therefore follows the change in normalized brow position relative to `PN`; do not reinterpret the sign physically without checking the field convention for the specific profile set.
+- For reporting a physical magnitude without sign interpretation, use `retreat_abs_m` and `retreat_rate_abs_m_per_year`.
 
 ### `data/processed/analysis_ready.csv`
 
@@ -177,14 +194,16 @@ Current dataset status: `draft`.
 - Profile metadata columns from `profiles.csv`
 - `n_wind_obs`, `mean_wind_speed_ms`, `max_wind_speed_ms`, `coverage_wind`
 - `n_water_obs`, `mean_level`, `max_level`, `min_level`, `range_level`, `coverage_water`
-- `qc_flag_analysis`: low-coverage flags for interval-level environmental aggregates.
-- `qc_note_analysis`: explicit note about ambiguous water-level column semantics.
+- `scope_status`: manual review status from `data/interim/site_scope_review.csv`.
+- `qc_flag_analysis`: interval-level flags such as `LOW_COVERAGE_WIND`, `LOW_COVERAGE_WATER`, `AMBIGUOUS_WATER_VARIABLE`, `SITE_SCOPE_NEEDS_REVIEW`.
+- `qc_note_analysis`: readable explanation of interval-level coverage and ambiguity issues.
 
 ## What Is Safe To Analyze Now
 
 - Site-level metadata joins from `sites.csv` and `profiles.csv`.
 - Transparent shoreline interval construction from `shoreline_observations.csv` to `interval_metrics.csv`.
 - Screening summaries of wind and water coverage at the interval level.
+- Absolute shoreline-change magnitude using `retreat_abs_m` and `retreat_rate_abs_m_per_year`.
 - Descriptive plots that explicitly respect `qc_flag`, `qc_note`, and coverage columns.
 
 ## What Is Not Yet Safe To Interpret
@@ -193,6 +212,30 @@ Current dataset status: `draft`.
 - Fine-grained georeferencing that assumes `base_points.csv` is complete.
 - Strong conclusions from interval-level wind aggregates where `LOW_COVERAGE_WIND` is present.
 - Interpretation of `retreat_m` sign as “erosion” versus “advance” without profile-specific field-convention checking.
+
+## Sign Convention
+
+- `retreat_m = brow_pos_end_m - brow_pos_start_m`
+- `retreat_rate_m_per_year = retreat_m / years_between`
+- The sign is a positional change in the normalized brow coordinate system, not an automatically interpreted geomorphic “erosion” sign.
+- For unsigned magnitude in reports, use `retreat_abs_m` and `retreat_rate_abs_m_per_year`.
+
+## Wind Extension Required
+
+- Tasks 3, 5, and 6 are not yet analysis-safe with the current local wind workbook alone.
+- The current interval linkage often yields `LOW_COVERAGE_WIND` because many shoreline intervals are much longer than the locally available meteorological coverage.
+- Extending the wind series or adding another transparent local source is required before stronger wind-retreat interpretation.
+
+## Water Semantics Still Ambiguous
+
+- `level_col_1_m` and `level_col_2_m` remain neutral placeholders.
+- `preferred_level_col` is a completeness heuristic only.
+- Do not relabel these columns semantically until the source workbook is decoded manually.
+
+## Base Points Partially Manual
+
+- `base_points.csv` is a reviewed-output table built from `data/interim/base_points_manual_template.csv`.
+- Manual checking is still required for unresolved `site_id`, partial dates, and any point-status interpretation not explicitly written in the source.
 
 ## Interim Outputs
 
@@ -203,6 +246,22 @@ Current dataset status: `draft`.
 ### `data/interim/base_points_manual_template.csv`
 
 - Purpose: manual-entry template for stable base-point extraction from `.doc` sources.
+
+### `data/interim/shoreline_duplicate_report.csv`
+
+- Purpose: duplicate-key manifest for shoreline observations grouped by `(site_id, profile_id, obs_date)`.
+
+### `data/interim/site_scope_review.csv`
+
+- Purpose: manual site-scope manifest used downstream without silent filtering.
+
+### `data/interim/water_levels_manual_dictionary.md`
+
+- Purpose: manual decoding checklist for ambiguous water-level columns.
+
+### `data/interim/wind_coverage_by_interval.csv`
+
+- Purpose: interval-level manifest of `n_wind_obs`, `coverage_wind`, and a transparent coverage flag.
 
 ### `data/interim/qc_summary.json`
 

@@ -41,6 +41,37 @@ OUTPUT_COLUMNS = [
 ]
 
 
+def write_water_levels_dictionary(path: Path, profile_rows: list[dict[str, object]]) -> None:
+    """Write a manual dictionary for ambiguous water-level blocks."""
+
+    lines = [
+        "# Water Levels Manual Dictionary",
+        "",
+        "This file documents only what was extracted mechanically from the source workbook.",
+        "No semantic interpretation of `level_col_1_m` or `level_col_2_m` is made here.",
+        "",
+        "## Extracted Sheets",
+        "",
+    ]
+    for row in profile_rows:
+        lines.extend(
+            [
+                f"### `{row['sheet_name']}`",
+                "",
+                f"- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`",
+                f"- Preferred column by completeness only: `{row.get('preferred_level_col') or 'none'}`",
+                f"- Rows scanned: {row['rows_scanned']}",
+                f"- Recognized years: {row['recognized_years']}",
+                f"- Rows with one numeric level column: {row['rows_with_1_numeric_col']}",
+                f"- Rows with two numeric level columns: {row['rows_with_2_numeric_cols']}",
+                f"- Problem rows: {row['problem_rows']}",
+                "- Manual interpretation still required for the physical meaning of the neutral level columns.",
+                "",
+            ]
+        )
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def find_water_block(rows: list[tuple[object, ...]]) -> tuple[int, int] | None:
     """Return the row and column where the water block begins."""
 
@@ -68,6 +99,7 @@ def build_water_levels_raw(output_path: Path | None = None) -> Path:
     source_path = find_input_file(RAW_DIR / "shoreline", "Скорость*в год.xlsx")
     output_path = output_path or PROCESSED_DIR / "water_levels_raw.csv"
     profile_path = INTERIM_DIR / "water_levels_profile.json"
+    dictionary_path = INTERIM_DIR / "water_levels_manual_dictionary.md"
     logger = setup_logging("build_water_levels_raw")
 
     workbook = load_workbook(source_path, read_only=True, data_only=True)
@@ -143,6 +175,9 @@ def build_water_levels_raw(output_path: Path | None = None) -> Path:
                 qc_notes.append(f"Extra non-empty cells outside the neutral water columns: {' | '.join(extra_nonempty[:4])}")
                 sheet_stats["problem_rows"] += 1
 
+            qc_flags.append("YEAR_ONLY_SOURCE")
+            qc_notes.append("The source block provides year-level values only; no full observation date was available.")
+
             sheet_records.append(
                 {
                     "water_obs_id": f"{normalize_site_id(sheet_name)}_{int(year)}_{row_idx}",
@@ -185,9 +220,11 @@ def build_water_levels_raw(output_path: Path | None = None) -> Path:
 
     profile_path.parent.mkdir(parents=True, exist_ok=True)
     profile_path.write_text(json.dumps(profile_rows, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_water_levels_dictionary(dictionary_path, profile_rows)
 
     logger.info("Built %s with %s rows", relative_to_root(output_path), len(result))
     logger.info("Wrote water-level profile report to %s", relative_to_root(profile_path))
+    logger.info("Wrote water-level manual dictionary to %s", relative_to_root(dictionary_path))
     return output_path
 
 

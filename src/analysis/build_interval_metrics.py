@@ -21,10 +21,24 @@ OUTPUT_COLUMNS = [
     "brow_pos_end_m",
     "retreat_m",
     "retreat_rate_m_per_year",
+    "retreat_abs_m",
+    "retreat_rate_abs_m_per_year",
     "n_raw_points_used",
     "calc_method",
     "qc_flag",
     "qc_note",
+]
+
+CONFLICT_COMPARE_COLUMNS = [
+    "measured_point_name",
+    "pn_name",
+    "raw_measured_distance_m",
+    "gp_to_pn_offset_m",
+    "brow_position_pn_m",
+    "brow_position_raw_m",
+    "raw_value_text",
+    "is_missing",
+    "missing_reason",
 ]
 
 
@@ -37,6 +51,29 @@ def compute_interval_metrics(observations: pd.DataFrame) -> pd.DataFrame:
 
     df["obs_date"] = pd.to_datetime(df["obs_date"], errors="coerce")
     df["brow_position_pn_m"] = pd.to_numeric(df["brow_position_pn_m"], errors="coerce")
+    duplicate_summary: dict[tuple[str, str], int] = {}
+    grouped_keys = df.groupby(["site_id", "profile_id", "obs_date"], dropna=False)
+    conflicting_date_keys: set[tuple[str, str, pd.Timestamp]] = set()
+    for (site_id, profile_id, obs_date), group in grouped_keys:
+        if len(group) <= 1 or pd.isna(obs_date):
+            continue
+        differing_fields = [
+            column
+            for column in CONFLICT_COMPARE_COLUMNS
+            if column in group.columns and group[column].fillna("__NA__").astype(str).nunique(dropna=False) > 1
+        ]
+        usable_brow_count = pd.to_numeric(group["brow_position_pn_m"], errors="coerce").notna().sum()
+        if differing_fields and usable_brow_count <= 1:
+            conflicting_date_keys.add((site_id, profile_id, obs_date))
+            duplicate_summary[(site_id, profile_id)] = duplicate_summary.get((site_id, profile_id), 0) + 1
+
+    if conflicting_date_keys:
+        conflict_mask = df.apply(
+            lambda row: (row["site_id"], row["profile_id"], row["obs_date"]) in conflicting_date_keys,
+            axis=1,
+        )
+        df = df.loc[~conflict_mask].copy()
+
     df = df.dropna(subset=["obs_date", "brow_position_pn_m"])
     if df.empty:
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
@@ -65,6 +102,8 @@ def compute_interval_metrics(observations: pd.DataFrame) -> pd.DataFrame:
             years_between = days_between / 365.25
             retreat_m = end["brow_position_pn_m"] - start["brow_position_pn_m"]
             rate = retreat_m / years_between if years_between > 0 else None
+            retreat_abs_m = abs(retreat_m)
+            retreat_rate_abs = abs(rate) if rate is not None else None
 
             qc_flags: list[str] = []
             qc_notes: list[str] = []
@@ -73,6 +112,12 @@ def compute_interval_metrics(observations: pd.DataFrame) -> pd.DataFrame:
                 qc_notes.append("Brow positions were averaged within each observation date before interval differencing.")
             if start["source_qc"] or end["source_qc"]:
                 qc_flags.append("SOURCE_QC_PRESENT")
+            excluded_duplicate_dates = duplicate_summary.get((site_id, profile_id), 0)
+            if excluded_duplicate_dates > 0:
+                qc_flags.append("DUPLICATE_KEY_DATES_EXCLUDED")
+                qc_notes.append(
+                    f"{excluded_duplicate_dates} conflicting duplicate observation-date key(s) were excluded before interval construction; see data/interim/shoreline_duplicate_report.csv."
+                )
 
             records.append(
                 {
@@ -87,6 +132,8 @@ def compute_interval_metrics(observations: pd.DataFrame) -> pd.DataFrame:
                     "brow_pos_end_m": end["brow_position_pn_m"],
                     "retreat_m": retreat_m,
                     "retreat_rate_m_per_year": rate,
+                    "retreat_abs_m": retreat_abs_m,
+                    "retreat_rate_abs_m_per_year": retreat_rate_abs,
                     "n_raw_points_used": int(start["n_raw_points_used"] + end["n_raw_points_used"]),
                     "calc_method": "mean_brow_position_pn_by_date_then_difference",
                     "qc_flag": ";".join(dict.fromkeys(qc_flags)) if qc_flags else None,

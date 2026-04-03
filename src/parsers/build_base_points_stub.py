@@ -9,7 +9,17 @@ from pathlib import Path
 
 import pandas as pd
 
-from .common import INTERIM_DIR, PROCESSED_DIR, RAW_DIR, clean_text, normalize_site_id, parse_number, relative_to_root, safe_parse_date, setup_logging
+from .common import (
+    INTERIM_DIR,
+    PROCESSED_DIR,
+    RAW_DIR,
+    clean_text,
+    parse_number,
+    relative_to_root,
+    resolve_site_id_from_text,
+    safe_parse_date,
+    setup_logging,
+)
 
 BASE_POINT_COLUMNS = [
     "base_point_id",
@@ -263,7 +273,7 @@ def finalize_base_points(template_df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(columns=BASE_POINT_COLUMNS)
 
     result = template_df.copy()
-    result["site_id"] = result["site_id"].map(lambda value: normalize_site_id(value) if clean_text(value) else None)
+    result["site_id"] = result["site_id"].map(resolve_site_id_from_text)
     result["obs_date"] = result["obs_date"].map(lambda value: safe_parse_date(value).isoformat() if safe_parse_date(value) else None)
     for column in ["x_m", "y_m", "accuracy_m"]:
         result[column] = result[column].map(parse_number)
@@ -275,6 +285,29 @@ def finalize_base_points(template_df: pd.DataFrame) -> pd.DataFrame:
     result["is_calculated"] = result["point_status"].eq("calculated")
     result["is_reinstalled"] = result["point_status"].eq("reinstalled")
     result["is_new"] = result["point_status"].eq("new")
+
+    qc_flag_series = result["qc_flag"].fillna("").astype(str)
+    qc_note_series = result["qc_note"].fillna("").astype(str)
+    unresolved_mask = result["site_id"].isna()
+    qc_flag_series.loc[unresolved_mask] = qc_flag_series.loc[unresolved_mask].map(
+        lambda value: ";".join(dict.fromkeys([part for part in [value, "SITE_ID_UNRESOLVED"] if part]))
+    )
+    qc_note_series.loc[unresolved_mask] = qc_note_series.loc[unresolved_mask].map(
+        lambda value: " ".join(
+            dict.fromkeys(
+                [
+                    part
+                    for part in [
+                        value,
+                        "site_id is still unresolved and requires manual mapping before geospatial interpretation.",
+                    ]
+                    if part
+                ]
+            )
+        )
+    )
+    result["qc_flag"] = qc_flag_series.replace("", pd.NA)
+    result["qc_note"] = qc_note_series.replace("", pd.NA)
 
     def make_base_point_id(row: pd.Series) -> str:
         site = clean_text(row.get("site_id")) or "unknown_site"
@@ -309,6 +342,8 @@ def write_template_readme(path: Path) -> None:
                 "- `point_status`: allowed normalized values are `new`, `reinstalled`, `calculated`, `refined`, `original`, `unknown`.",
                 "- `status_note`: keep the original wording that justifies the status.",
                 "- `site_id`: fill manually when not resolved automatically.",
+                "- `qc_flag`: keep parser flags and append your own transparent tags such as `MANUAL_VERIFIED` when review is complete.",
+                "- `qc_note`: explain why a `site_id`, status, or date remains uncertain.",
                 "- `source_row_ref`: keep a stable reference such as `strings_el:115` or a manual note like `page 2, paragraph 3`.",
                 "",
                 "Status normalization rules used by the parser:",
@@ -321,6 +356,7 @@ def write_template_readme(path: Path) -> None:
                 "Important:",
                 "- Do not invent coordinates or dates.",
                 "- Leave uncertain values blank and explain uncertainty in `qc_note` or `status_note`.",
+                "- Rows with `SITE_ID_UNRESOLVED` are expected until the point-to-site mapping is confirmed manually.",
             ]
         ),
         encoding="utf-8",
