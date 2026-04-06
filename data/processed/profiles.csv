@@ -1,0 +1,34 @@
+profile_id,site_id,profile_num,profile_name,sheet_name_raw,start_date,end_date,n_observations,source_file
+berezhnovka_profile_60,berezhnovka,60,ПРОФИЛЬ № 60,Бережновка,1958-10-01,2023-10-03,24,data/raw/profiles/251001 БРОВКИ Баранова.xls
+berezhnovka_profile_61,berezhnovka,61,ПРОФИЛЬ № 61,Бережновка,1958-10-01,2023-10-03,24,data/raw/profiles/251001 БРОВКИ Баранова.xls
+berezhnovka_profile_62,berezhnovka,62,ПРОФИЛЬ № 62,Бережновка,1958-10-01,2023-10-03,24,data/raw/profiles/251001 БРОВКИ Баранова.xls
+burty_profile_1,burty,1,ПРОФИЛЬ № 1,Бурты,1987-06-30,2023-08-15,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+burty_profile_2,burty,2,ПРОФИЛЬ № 2,Бурты,1987-06-30,2023-08-15,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+burty_profile_3,burty,3,ПРОФИЛЬ № 3,Бурты,1987-06-30,2023-08-15,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+molchanovka_profile_57,molchanovka,57,ПРОФИЛЬ № 57,Молчановка,1958-09-30,2022-08-03,25,data/raw/profiles/251001 БРОВКИ Баранова.xls
+molchanovka_profile_58,molchanovka,58,ПРОФИЛЬ № 58,Молчановка,1958-09-30,2022-08-03,25,data/raw/profiles/251001 БРОВКИ Баранова.xls
+molchanovka_profile_59,molchanovka,59,ПРОФИЛЬ № 59,Молчановка,1958-09-30,2022-08-03,25,data/raw/profiles/251001 БРОВКИ Баранова.xls
+nizhniy_balykley_profile_52,nizhniy_balykley,52,ПРОФИЛЬ № 52,Нижний Балыклей,1958-09-28,2024-07-16,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+nizhniy_balykley_profile_53,nizhniy_balykley,53,ПРОФИЛЬ № 53,Нижний Балыклей,1958-09-28,2024-07-16,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+nizhniy_balykley_profile_54,nizhniy_balykley,54,ПРОФИЛЬ № 54,Нижний Балыклей,1958-09-28,2024-07-16,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+nizhniy_urakov_profile_1,nizhniy_urakov,1,ПРОФИЛЬ № 1,Нижний Ураков,1987-06-28,2022-08-02,25,data/raw/profiles/251001 БРОВКИ Баранова.xls
+nizhniy_urakov_profile_2,nizhniy_urakov,2,ПРОФИЛЬ № 2,Нижний Ураков,1987-06-28,2022-08-02,25,data/raw/profiles/251001 БРОВКИ Баранова.xls
+nizhniy_urakov_profile_3,nizhniy_urakov,3,ПРОФИЛЬ № 3,Нижний Ураков,1987-06-28,2022-08-02,25,data/raw/profiles/251001 БРОВКИ Баранова.xls
+nizhniy_urakov_profile_4,nizhniy_urakov,4,ПРОФИЛЬ № 4,Нижний Ураков,1987-06-28,2022-08-02,25,data/raw/profiles/251001 БРОВКИ Баранова.xls
+novonikolskoe_profile_49,novonikolskoe,49,ПРОФИЛЬ № 49,Новоникольское,1959-12-11,2025-10-01,23,data/raw/profiles/251001 БРОВКИ Баранова.xls
+novonikolskoe_profile_50,novonikolskoe,50,ПРОФИЛЬ № 50,Новоникольское,1959-12-11,2025-10-01,23,data/raw/profiles/251001 БРОВКИ Баранова.xls
+novonikolskoe_profile_51,novonikolskoe,51,ПРОФИЛЬ № 51,Новоникольское,1959-12-11,2025-10-01,23,data/raw/profiles/251001 БРОВКИ Баранова.xls
+pichuga_yuzhny_profile_4,pichuga_yuzhny,4,ПРОФИЛЬ № 4,Пичуга-Южный,1977-12-01,2024-07-12,19,data/raw/profiles/251001 БРОВКИ Баранова.xls
+pichuga_yuzhny_profile_5,pichuga_yuzhny,5,ПРОФИЛЬ № 5,Пичуга-Южный,1977-12-01,2024-07-12,19,data/raw/profiles/251001 БРОВКИ Баранова.xls
+pichuga_yuzhny_profile_6,pichuga_yuzhny,6,ПРОФИЛЬ № 6,Пичуга-Южный,1977-12-01,2024-07-12,19,data/raw/profiles/251001 БРОВКИ Баранова.xls
+proleyskiy_profile_1,proleyskiy,1,ПРОФИЛЬ № 1,Пролейский,1987-07-01,2023-08-14,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+proleyskiy_profile_2,proleyskiy,2,ПРОФИЛЬ № 2,Пролейский,1987-07-01,2023-08-14,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+proleyskiy_profile_3,proleyskiy,3,ПРОФИЛЬ № 3,Пролейский,1987-07-01,2023-08-14,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+suvodskaya_profile_2,suvodskaya,2,ПРОФИЛЬ № 2,Суводская,2009-07-16,2025-04-23,6,data/raw/profiles/251001 БРОВКИ Баранова.xls
+suvodskaya_profile_3,suvodskaya,3,ПРОФИЛЬ № 3,Суводская,2009-07-16,2025-04-23,6,data/raw/profiles/251001 БРОВКИ Баранова.xls
+suvodskaya_profile_4,suvodskaya,4,ПРОФИЛЬ № 4,Суводская,2009-07-16,2025-04-23,6,data/raw/profiles/251001 БРОВКИ Баранова.xls
+suvodskaya_profile_5,suvodskaya,5,ПРОФИЛЬ № 5,Суводская,2009-07-16,2025-04-23,5,data/raw/profiles/251001 БРОВКИ Баранова.xls
+suvodskaya_profile_profil_mezhdu_ovragom_i_brovkoy_vdkhr,suvodskaya,,ПРОФИЛЬ МЕЖДУ ОВРАГОМ И БРОВКОЙ ВДХР,Суводская,2009-10-16,2025-04-23,5,data/raw/profiles/251001 БРОВКИ Баранова.xls
+urakov_bugor_profile_1,urakov_bugor,1,ПРОФИЛЬ № 1,Ураков Бугор ,1987-06-27,2023-10-04,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+urakov_bugor_profile_2,urakov_bugor,2,ПРОФИЛЬ № 2,Ураков Бугор ,1987-06-27,2023-10-04,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
+urakov_bugor_profile_3,urakov_bugor,3,ПРОФИЛЬ № 3,Ураков Бугор ,1987-06-27,2023-10-04,26,data/raw/profiles/251001 БРОВКИ Баранова.xls
