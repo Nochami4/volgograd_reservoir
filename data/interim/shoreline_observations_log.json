@@ -1,0 +1,11 @@
+{
+  "source_file": "data/raw/profiles/251001 БРОВКИ Баранова.xls",
+  "output_file": "data/processed/shoreline_observations.csv",
+  "duplicate_report_file": "data/interim/shoreline_duplicate_report.csv",
+  "duplicate_groups": 3,
+  "rows_read": 716,
+  "rows_missing_numeric": 87,
+  "rows_with_qc_flags": 166,
+  "rows_invalid_date": 0,
+  "rows_invalid_numeric_text": 67
+}

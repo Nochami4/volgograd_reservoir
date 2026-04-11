@@ -1,0 +1,344 @@
+[
+  {
+    "file": "data/processed/analysis_ready.csv",
+    "rows": 587,
+    "columns": 50,
+    "key_columns": [
+      "interval_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "interval_id": 0.0,
+      "site_id": 0.0,
+      "profile_id": 0.0,
+      "date_start": 0.0,
+      "date_end": 0.0,
+      "days_between": 0.0,
+      "years_between": 0.0,
+      "brow_pos_start_m": 0.0,
+      "brow_pos_end_m": 0.0,
+      "retreat_m": 0.0,
+      "retreat_rate_m_per_year": 0.0,
+      "retreat_abs_m": 0.0,
+      "retreat_rate_abs_m_per_year": 0.0,
+      "n_raw_points_used": 0.0,
+      "calc_method": 0.0,
+      "qc_flag": 0.8109028960817717,
+      "qc_note": 1.0,
+      "site_name": 0.0,
+      "shore_type": 0.0,
+      "shore_orientation_text": 0.0,
+      "shore_orientation_deg": 0.0,
+      "exposure_sectors_text": 0.0,
+      "lithology_text": 0.0,
+      "lithology_class": 0.0,
+      "notes": 1.0,
+      "source_file": 0.0,
+      "source_sheet": 0.0,
+      "profile_num": 0.0017035775127768314,
+      "profile_name": 0.0,
+      "sheet_name_raw": 0.0,
+      "start_date": 0.0,
+      "end_date": 0.0,
+      "n_observations": 0.0,
+      "source_file_profile": 0.0,
+      "in_project_scope": 1.0,
+      "scope_status": 0.0,
+      "scope_note": 0.0,
+      "n_wind_obs": 0.0,
+      "mean_wind_speed_ms": 0.8960817717206133,
+      "max_wind_speed_ms": 0.8960817717206133,
+      "coverage_wind": 0.0,
+      "n_water_obs": 0.0,
+      "mean_level": 0.22998296422487224,
+      "max_level": 0.22998296422487224,
+      "min_level": 0.22998296422487224,
+      "range_level": 0.22998296422487224,
+      "coverage_water": 0.0,
+      "water_variable_is_ambiguous": 0.0,
+      "qc_flag_analysis": 0.0,
+      "qc_note_analysis": 0.0
+    },
+    "extra_checks": [
+      {
+        "name": "analysis_low_coverage_wind_share",
+        "count": null,
+        "details": "Share of intervals flagged LOW_COVERAGE_WIND: 1.000."
+      },
+      {
+        "name": "analysis_low_coverage_water_share",
+        "count": null,
+        "details": "Share of intervals flagged LOW_COVERAGE_WATER: 0.300."
+      },
+      {
+        "name": "analysis_intervals_with_any_wind",
+        "count": 101,
+        "details": "Intervals with coverage_wind > 0."
+      },
+      {
+        "name": "analysis_intervals_with_adequate_wind",
+        "count": 0,
+        "details": "Intervals with coverage_wind >= 0.8."
+      }
+    ],
+    "critical_blockers": [
+      "Wind coverage is below the 0.8 threshold for many shoreline intervals."
+    ]
+  },
+  {
+    "file": "data/processed/base_points.csv",
+    "rows": 12,
+    "columns": 16,
+    "key_columns": [
+      "base_point_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "base_point_id": 0.0,
+      "site_id": 0.75,
+      "base_point_name": 0.0,
+      "obs_date": 0.4166666666666667,
+      "x_m": 0.16666666666666666,
+      "y_m": 0.16666666666666666,
+      "accuracy_m": 1.0,
+      "point_status": 0.0,
+      "status_note": 1.0,
+      "is_calculated": 0.0,
+      "is_reinstalled": 0.0,
+      "is_new": 0.0,
+      "source_file": 0.0,
+      "source_row_ref": 0.0,
+      "qc_flag": 0.0,
+      "qc_note": 0.0
+    },
+    "extra_checks": [
+      {
+        "name": "base_points_empty",
+        "count": 0,
+        "details": "An empty base_points layer means shoreline geometry remains only partially anchored."
+      },
+      {
+        "name": "base_points_missing_site_id_share",
+        "count": null,
+        "details": "Share of base-point rows without resolved site_id: 0.750."
+      },
+      {
+        "name": "base_points_point_status_distribution",
+        "count": null,
+        "details": "Point-status distribution: {'unknown': 12}."
+      }
+    ],
+    "critical_blockers": [
+      "Some base points still have unresolved site_id and require manual review."
+    ]
+  },
+  {
+    "file": "data/processed/interval_metrics.csv",
+    "rows": 587,
+    "columns": 17,
+    "key_columns": [
+      "interval_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "interval_id": 0.0,
+      "site_id": 0.0,
+      "profile_id": 0.0,
+      "date_start": 0.0,
+      "date_end": 0.0,
+      "days_between": 0.0,
+      "years_between": 0.0,
+      "brow_pos_start_m": 0.0,
+      "brow_pos_end_m": 0.0,
+      "retreat_m": 0.0,
+      "retreat_rate_m_per_year": 0.0,
+      "retreat_abs_m": 0.0,
+      "retreat_rate_abs_m_per_year": 0.0,
+      "n_raw_points_used": 0.0,
+      "calc_method": 0.0,
+      "qc_flag": 0.8109028960817717,
+      "qc_note": 1.0
+    },
+    "extra_checks": [],
+    "critical_blockers": []
+  },
+  {
+    "file": "data/processed/profiles.csv",
+    "rows": 33,
+    "columns": 9,
+    "key_columns": [
+      "profile_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "profile_id": 0.0,
+      "site_id": 0.0,
+      "profile_num": 0.030303030303030304,
+      "profile_name": 0.0,
+      "sheet_name_raw": 0.0,
+      "start_date": 0.0,
+      "end_date": 0.0,
+      "n_observations": 0.0,
+      "source_file": 0.0
+    },
+    "extra_checks": [],
+    "critical_blockers": []
+  },
+  {
+    "file": "data/processed/shoreline_observations.csv",
+    "rows": 716,
+    "columns": 19,
+    "key_columns": [
+      "obs_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "obs_id": 0.0,
+      "site_id": 0.0,
+      "profile_id": 0.0,
+      "obs_date": 0.046089385474860335,
+      "survey_year": 0.046089385474860335,
+      "measured_point_name": 0.09078212290502793,
+      "pn_name": 0.12011173184357542,
+      "raw_measured_distance_m": 0.12150837988826815,
+      "gp_to_pn_offset_m": 0.1494413407821229,
+      "brow_position_pn_m": 0.1340782122905028,
+      "brow_position_raw_m": 0.12150837988826815,
+      "raw_value_text": 0.9539106145251397,
+      "is_missing": 0.0,
+      "missing_reason": 0.8784916201117319,
+      "qc_flag": 0.7681564245810056,
+      "qc_note": 0.86731843575419,
+      "source_file": 0.0,
+      "source_sheet": 0.0,
+      "source_row": 0.0
+    },
+    "extra_checks": [
+      {
+        "name": "shoreline_duplicate_groups",
+        "count": 3,
+        "details": "Duplicate observation keys are described in data/interim/shoreline_duplicate_report.csv."
+      }
+    ],
+    "critical_blockers": [
+      "Some shoreline observation keys remain conflicting and require manual review."
+    ]
+  },
+  {
+    "file": "data/processed/sites.csv",
+    "rows": 10,
+    "columns": 11,
+    "key_columns": [
+      "site_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "site_id": 0.0,
+      "site_name": 0.0,
+      "shore_type": 0.0,
+      "shore_orientation_text": 0.0,
+      "shore_orientation_deg": 0.0,
+      "exposure_sectors_text": 0.0,
+      "lithology_text": 0.0,
+      "lithology_class": 0.0,
+      "notes": 1.0,
+      "source_file": 0.0,
+      "source_sheet": 0.0
+    },
+    "extra_checks": [],
+    "critical_blockers": []
+  },
+  {
+    "file": "data/processed/water_levels_raw.csv",
+    "rows": 297,
+    "columns": 15,
+    "key_columns": [
+      "water_obs_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "water_obs_id": 0.0,
+      "site_id": 0.0,
+      "site_name": 0.0,
+      "obs_date": 1.0,
+      "year": 0.0,
+      "level_col_1_m": 0.0,
+      "level_col_2_m": 0.0,
+      "source_file": 0.0,
+      "source_sheet": 0.0,
+      "source_row": 0.0,
+      "is_missing": 0.0,
+      "missing_reason": 1.0,
+      "qc_flag": 0.0,
+      "qc_note": 0.0,
+      "preferred_level_col": 0.0
+    },
+    "extra_checks": [
+      {
+        "name": "ambiguous_level_columns_share",
+        "count": null,
+        "details": "Share of rows with ambiguous neutral level columns: 1.000."
+      },
+      {
+        "name": "water_rows_without_full_date_share",
+        "count": null,
+        "details": "Share of water rows without full obs_date: 1.000."
+      }
+    ],
+    "critical_blockers": [
+      "Water level columns remain semantically ambiguous; only neutral technical aggregation is currently safe."
+    ]
+  },
+  {
+    "file": "data/processed/wind_obs_hourly.csv",
+    "rows": 1596,
+    "columns": 20,
+    "key_columns": [
+      "wind_obs_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "wind_obs_id": 0.0,
+      "station_id": 0.0,
+      "station_name": 0.0,
+      "obs_datetime": 0.0006265664160401002,
+      "obs_date": 0.0006265664160401002,
+      "year": 0.0006265664160401002,
+      "month": 0.0006265664160401002,
+      "day": 0.0006265664160401002,
+      "hour": 0.0,
+      "wind_dir_text": 0.013784461152882205,
+      "wind_dir_deg": 0.013784461152882205,
+      "wind_speed_ms": 0.013784461152882205,
+      "wind_gust_ms": 0.8515037593984962,
+      "source_file": 0.0,
+      "source_sheet": 0.0,
+      "source_row": 0.0,
+      "is_missing": 0.0,
+      "missing_reason": 0.9862155388471178,
+      "qc_flag": 0.9855889724310777,
+      "qc_note": 0.9993734335839599
+    },
+    "extra_checks": [
+      {
+        "name": "wind_year_out_of_range",
+        "count": 0,
+        "details": "Accepted range: 1950..2025."
+      },
+      {
+        "name": "missing_obs_datetime_when_date_and_hour_present",
+        "count": 0,
+        "details": "Rows with parsed year and hour should carry obs_datetime unless flagged invalid upstream."
+      }
+    ],
+    "critical_blockers": []
+  }
+]

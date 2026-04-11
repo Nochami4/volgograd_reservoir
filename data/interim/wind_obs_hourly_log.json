@@ -1,0 +1,8 @@
+{
+  "source_file": "data/raw/meteo/Камышин скорость и направление ветра.xlsx",
+  "rows_read": 24391,
+  "valid_observations": 1595,
+  "rows_with_date_error": 1,
+  "rows_with_missing_wind_speed": 22,
+  "rows_with_missing_wind_direction": 22
+}

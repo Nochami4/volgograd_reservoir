@@ -1,0 +1,4 @@
+site_id,profile_id,obs_date,n_rows,obs_ids,source_rows,is_full_duplicate,differing_fields,resolution
+urakov_bugor,urakov_bugor_profile_1,,2,urakov_bugor_profile_1_5;urakov_bugor_profile_1_6,5;6,False,raw_value_text,keep_and_flag_conflict
+urakov_bugor,urakov_bugor_profile_2,,2,urakov_bugor_profile_2_5;urakov_bugor_profile_2_6,5;6,False,raw_value_text,keep_and_flag_conflict
+urakov_bugor,urakov_bugor_profile_3,,2,urakov_bugor_profile_3_5;urakov_bugor_profile_3_6,5;6,False,raw_value_text,keep_and_flag_conflict
