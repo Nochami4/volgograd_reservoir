@@ -1,11 +1,11 @@
 site_id,site_name,in_project_scope,scope_status,scope_note
-proleyskiy,Пролейский,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-burty,Бурты,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-berezhnovka,Бережновка,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-molchanovka,Молчановка,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-nizhniy_urakov,Нижний Ураков,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-urakov_bugor,Ураков Бугов,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-pichuga_yuzhny,Пичуга-Южный,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-novonikolskoe,Новоникольское,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-nizhniy_balykley,Нижний Балыклей,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
-suvodskaya,Суводская,,needs_review,Auto-initialized from sites.csv; confirm whether this site is in the current project scope.
+proleyskiy,Пролейский,True,reviewed,Listed on the project map and in the source-document scope.
+burty,Бурты,True,reviewed,Listed on the project map and in the source-document scope.
+berezhnovka,Бережновка,True,reviewed,Listed on the project map and in the source-document scope.
+molchanovka,Молчановка,True,reviewed,Listed on the project map as Молчановский and matched to site Молчановка.
+nizhniy_urakov,Нижний Ураков,True,reviewed,Listed on the project map and in the source-document scope.
+urakov_bugor,Ураков Бугор,True,reviewed,Listed on the project map and in the source-document scope.
+pichuga_yuzhny,Пичуга-Южный,True,reviewed,Listed on the project map and in the source-document scope.
+novonikolskoe,Новоникольское,True,reviewed,Listed on the project map and in the source-document scope.
+nizhniy_balykley,Нижний Балыклей,True,reviewed,Listed on the project map and in the source-document scope.
+suvodskaya,Суводская,False,reviewed,Present in the metadata workbook but not listed among the nine scoped map/source-document sites.

@@ -7,10 +7,22 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, relative_to_root, setup_logging
+from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, merge_with_checks, relative_to_root, setup_logging
 
 LOW_COVERAGE_THRESHOLD = 0.8
 SITE_SCOPE_COLUMNS = ["site_id", "site_name", "in_project_scope", "scope_status", "scope_note"]
+PROJECT_SCOPE_DEFAULTS = {
+    "pichuga_yuzhny": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "novonikolskoe": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "proleyskiy": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "nizhniy_balykley": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "burty": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "nizhniy_urakov": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "urakov_bugor": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "molchanovka": (True, "reviewed", "Listed on the project map as Молчановский and matched to site Молчановка."),
+    "berezhnovka": (True, "reviewed", "Listed on the project map and in the source-document scope."),
+    "suvodskaya": (False, "reviewed", "Present in the metadata workbook but not listed among the nine scoped map/source-document sites."),
+}
 
 
 def prepare_water_levels(water_df: pd.DataFrame) -> pd.DataFrame:
@@ -74,21 +86,29 @@ def ensure_site_scope_review(sites_df: pd.DataFrame) -> pd.DataFrame:
 
     scope_path = INTERIM_DIR / "site_scope_review.csv"
     base_scope = sites_df[["site_id", "site_name"]].drop_duplicates().copy()
-    base_scope["in_project_scope"] = pd.NA
-    base_scope["scope_status"] = "needs_review"
-    base_scope["scope_note"] = "Auto-initialized from sites.csv; confirm whether this site is in the current project scope."
+    base_scope["in_project_scope"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", "Scope status still needs review."))[0])
+    base_scope["scope_status"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", "Scope status still needs review."))[1])
+    base_scope["scope_note"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", "Scope status still needs review."))[2])
 
     if scope_path.exists():
         existing = pd.read_csv(scope_path, dtype=object)
         for column in SITE_SCOPE_COLUMNS:
             if column not in existing.columns:
                 existing[column] = pd.NA
-        scope_df = base_scope.merge(
+        scope_df = merge_with_checks(
+            base_scope,
             existing[SITE_SCOPE_COLUMNS],
             on=["site_id", "site_name"],
             how="left",
+            validate="one_to_one",
+            relationship_name="site_scope_review refresh",
+            require_all_left=False,
             suffixes=("_default", ""),
         )
+        stale_existing_mask = scope_df["scope_note"].fillna("").astype(str).str.startswith("Auto-initialized from sites.csv")
+        scope_df.loc[stale_existing_mask, "in_project_scope"] = pd.NA
+        scope_df.loc[stale_existing_mask, "scope_status"] = pd.NA
+        scope_df.loc[stale_existing_mask, "scope_note"] = pd.NA
         scope_df["in_project_scope"] = scope_df["in_project_scope"].combine_first(scope_df["in_project_scope_default"])
         scope_df["scope_status"] = scope_df["scope_status"].combine_first(scope_df["scope_status_default"])
         scope_df["scope_note"] = scope_df["scope_note"].combine_first(scope_df["scope_note_default"])
@@ -121,10 +141,31 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
     water_df["year"] = pd.to_numeric(water_df["year"], errors="coerce")
     water_df["analysis_level_m"] = pd.to_numeric(water_df["analysis_level_m"], errors="coerce")
 
-    merged = (
-        interval_df.merge(sites_df, on="site_id", how="left", suffixes=("", "_site"))
-        .merge(profiles_df, on=["site_id", "profile_id"], how="left", suffixes=("", "_profile"))
-        .merge(scope_df, on=["site_id", "site_name"], how="left")
+    merged = merge_with_checks(
+        interval_df,
+        sites_df,
+        on="site_id",
+        how="left",
+        validate="many_to_one",
+        relationship_name="interval_metrics -> sites",
+        suffixes=("", "_site"),
+    )
+    merged = merge_with_checks(
+        merged,
+        profiles_df,
+        on=["site_id", "profile_id"],
+        how="left",
+        validate="many_to_one",
+        relationship_name="interval_metrics/sites -> profiles",
+        suffixes=("", "_profile"),
+    )
+    merged = merge_with_checks(
+        merged,
+        scope_df,
+        on=["site_id", "site_name"],
+        how="left",
+        validate="many_to_one",
+        relationship_name="interval_metrics/sites/profiles -> site_scope_review",
     )
 
     wind_aggregates = merged.apply(lambda row: aggregate_wind_for_interval(row, wind_df), axis=1, result_type="expand")

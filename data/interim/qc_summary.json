@@ -43,7 +43,7 @@
       "end_date": 0.0,
       "n_observations": 0.0,
       "source_file_profile": 0.0,
-      "in_project_scope": 1.0,
+      "in_project_scope": 0.0,
       "scope_status": 0.0,
       "scope_note": 0.0,
       "n_wind_obs": 0.0,
@@ -88,8 +88,8 @@
   },
   {
     "file": "data/processed/base_points.csv",
-    "rows": 12,
-    "columns": 16,
+    "rows": 16,
+    "columns": 21,
     "key_columns": [
       "base_point_id"
     ],
@@ -97,21 +97,26 @@
     "duplicate_keys": 0,
     "missing_share": {
       "base_point_id": 0.0,
-      "site_id": 0.75,
-      "base_point_name": 0.0,
-      "obs_date": 0.4166666666666667,
-      "x_m": 0.16666666666666666,
-      "y_m": 0.16666666666666666,
-      "accuracy_m": 1.0,
+      "site_name_raw": 0.0,
+      "site_id": 0.0,
+      "base_point_name_raw": 0.0,
+      "base_point_name_norm": 0.0,
+      "obs_date_raw": 0.0625,
+      "obs_date": 0.125,
+      "y_m": 0.0,
+      "x_m": 0.0,
+      "accuracy_m": 0.9375,
+      "note_raw": 0.8125,
       "point_status": 0.0,
-      "status_note": 1.0,
       "is_calculated": 0.0,
       "is_reinstalled": 0.0,
       "is_new": 0.0,
+      "is_refined": 0.0,
+      "has_uncertain_date": 0.0,
+      "needs_manual_review": 0.0,
+      "review_reason": 0.8125,
       "source_file": 0.0,
-      "source_row_ref": 0.0,
-      "qc_flag": 0.0,
-      "qc_note": 0.0
+      "source_row_ref": 0.0
     },
     "extra_checks": [
       {
@@ -122,17 +127,79 @@
       {
         "name": "base_points_missing_site_id_share",
         "count": null,
-        "details": "Share of base-point rows without resolved site_id: 0.750."
+        "details": "Share of base-point rows without resolved site_id: 0.000."
       },
       {
         "name": "base_points_point_status_distribution",
         "count": null,
-        "details": "Point-status distribution: {'unknown': 12}."
+        "details": "Point-status distribution: {'original': 15, 'refined': 1}."
       }
     ],
-    "critical_blockers": [
-      "Some base points still have unresolved site_id and require manual review."
-    ]
+    "critical_blockers": []
+  },
+  {
+    "file": "data/processed/base_points_current.csv",
+    "rows": 16,
+    "columns": 20,
+    "key_columns": [],
+    "duplicate_rows": 0,
+    "duplicate_keys": null,
+    "missing_share": {
+      "site_name_raw": 0.0,
+      "site_id": 0.0,
+      "base_point_name_raw": 0.0,
+      "base_point_name_norm": 0.0,
+      "obs_date_raw": 0.0625,
+      "obs_date": 0.125,
+      "y_m": 0.0,
+      "x_m": 0.0,
+      "accuracy_m": 0.9375,
+      "note_raw": 0.8125,
+      "point_status": 0.0,
+      "is_calculated": 0.0,
+      "is_reinstalled": 0.0,
+      "is_new": 0.0,
+      "is_refined": 0.0,
+      "has_uncertain_date": 0.0,
+      "needs_manual_review": 0.0,
+      "review_reason": 0.8125,
+      "source_file": 0.0,
+      "source_row_ref": 0.0
+    },
+    "extra_checks": [],
+    "critical_blockers": []
+  },
+  {
+    "file": "data/processed/base_points_history.csv",
+    "rows": 21,
+    "columns": 20,
+    "key_columns": [],
+    "duplicate_rows": 0,
+    "duplicate_keys": null,
+    "missing_share": {
+      "site_name_raw": 0.0,
+      "site_id": 0.0,
+      "base_point_name_raw": 0.0,
+      "base_point_name_norm": 0.0,
+      "obs_date_raw": 0.047619047619047616,
+      "obs_date": 0.19047619047619047,
+      "y_m": 0.0,
+      "x_m": 0.0,
+      "accuracy_m": 0.8571428571428571,
+      "note_raw": 0.7619047619047619,
+      "point_status": 0.0,
+      "is_calculated": 0.0,
+      "is_reinstalled": 0.0,
+      "is_new": 0.0,
+      "is_refined": 0.0,
+      "has_uncertain_date": 0.0,
+      "needs_manual_review": 0.0,
+      "review_reason": 0.7619047619047619,
+      "source_file": 0.0,
+      "source_row_ref": 0.0
+    },
+    "extra_checks": [],
+    "critical_blockers": []
   },
   {
     "file": "data/processed/interval_metrics.csv",

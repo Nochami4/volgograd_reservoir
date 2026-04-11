@@ -12,6 +12,7 @@ from .common import (
     RAW_DIR,
     clean_text,
     find_input_file,
+    normalize_site_name,
     normalize_site_id,
     orientation_to_deg,
     relative_to_root,
@@ -61,10 +62,11 @@ def build_sites(output_path: Path | None = None) -> Path:
             site_name = clean_text(row.iloc[1] if len(row) > 1 else "")
             if not site_name:
                 continue
+            canonical_site_name = normalize_site_name(site_name)
             notes = " | ".join(clean_text(value) for value in row.iloc[7:].tolist() if clean_text(value))
             record = {
-                "site_id": normalize_site_id(site_name),
-                "site_name": site_name,
+                "site_id": normalize_site_id(canonical_site_name),
+                "site_name": canonical_site_name,
                 "shore_type": clean_text(row.iloc[2] if len(row) > 2 else ""),
                 "shore_orientation_text": clean_text(row.iloc[3] if len(row) > 3 else ""),
                 "shore_orientation_deg": orientation_to_deg(row.iloc[3] if len(row) > 3 else ""),

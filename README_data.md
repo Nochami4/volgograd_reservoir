@@ -15,7 +15,7 @@ Current dataset status: `draft`.
 
 ## Known Limitations
 
-- `base_points` is partially manual: semi-automatic `.doc` extraction only seeds a review template and does not replace manual checking.
+- `base_points` are now rebuilt into transparent `history/current` layers, but some rows still require manual review because the legacy `.doc` loses table structure in string extraction.
 - Water-level columns remain ambiguous and therefore stay neutral as `level_col_*`.
 - Wind coverage is incomplete for many shoreline intervals, so interval-level wind summaries should be treated as screening variables only.
 - Duplicate shoreline observation keys exist and are tracked explicitly in `data/interim/shoreline_duplicate_report.csv`.
@@ -134,26 +134,34 @@ Current dataset status: `draft`.
 - The extraction profile is documented in `data/interim/water_levels_profile.json`.
 - A manual interpretation manifest is maintained in `data/interim/water_levels_manual_dictionary.md`.
 
+### `data/processed/base_points_history.csv`
+
+- Purpose: full recoverable history of base-point coordinates extracted from `data/raw/docs/GPS-координаты пунктов базиса с дополнениями Барановой 2024 г..doc`.
+- Each row preserves the best available source token, date token, coordinate pair, status flags, and review state.
+- Keep this table when you need provenance, partial dates, or all historical coordinate versions for one point.
+- Key columns:
+- `site_name_raw`, `site_id`
+- `base_point_name_raw`, `base_point_name_norm`
+- `obs_date_raw`, `obs_date`
+- `y_m`, `x_m`, `accuracy_m`
+- `note_raw`, `point_status`
+- `is_calculated`, `is_reinstalled`, `is_new`, `is_refined`
+- `has_uncertain_date`, `needs_manual_review`, `review_reason`
+- `source_file`, `source_row_ref`
+
+### `data/processed/base_points_current.csv`
+
+- Purpose: one current coordinate choice per `(site_id, base_point_name_norm)` selected from `base_points_history.csv`.
+- Current selection rule:
+- Prefer rows with an explicit full `obs_date`.
+- Then prefer the latest available `obs_date`.
+- Break ties in favor of rows without uncertain dates, without calculated-only status, and without manual-review flags.
+- This table is the recommended join target for downstream georeferencing work.
+
 ### `data/processed/base_points.csv`
 
-- Purpose: partially populated base-point table assembled from a preserved manual template plus safe `.doc` string extraction.
-- Sources: `data/raw/docs/GPS-координаты пунктов базиса с дополнениями Барановой 2024 г..doc`, `data/raw/docs/Абрисы-2006.doc`
-- Columns:
-- `base_point_id`: stable row identifier.
-- `site_id`: normalized site id when resolved safely.
-- `base_point_name`: source point token.
-- `obs_date`: explicit full date only; partial dates remain missing.
-- `x_m`, `y_m`: copied source coordinates without CRS reinterpretation.
-- `accuracy_m`: explicit accuracy only when stated in the source.
-- `point_status`: normalized status value.
-- `status_note`: free-text justification for the status.
-- `is_calculated`, `is_reinstalled`, `is_new`: boolean status flags derived from `point_status`.
-- `source_file`, `source_row_ref`
-- `qc_flag`, `qc_note`
-- Notes:
-- OCR-style parsing is intentionally avoided.
-- Semi-automatic candidates are staged through `data/interim/base_points_manual_template.csv` and require manual verification.
-- Unresolved rows are explicitly marked with `SITE_ID_UNRESOLVED`.
+- Purpose: backward-compatible alias of the current base-point layer for existing pipeline/QC code.
+- It contains the same current-coordinate rows plus a synthetic `base_point_id`.
 
 ### `data/processed/interval_metrics.csv`
 
@@ -209,7 +217,7 @@ Current dataset status: `draft`.
 ## What Is Not Yet Safe To Interpret
 
 - Any physics-based or causal interpretation that depends strongly on the meaning of `level_col_*`.
-- Fine-grained georeferencing that assumes `base_points.csv` is complete.
+- Fine-grained georeferencing that assumes `base_points_current.csv` is complete and fully reviewed.
 - Strong conclusions from interval-level wind aggregates where `LOW_COVERAGE_WIND` is present.
 - Interpretation of `retreat_m` sign as “erosion” versus “advance” without profile-specific field-convention checking.
 
@@ -232,10 +240,16 @@ Current dataset status: `draft`.
 - `preferred_level_col` is a completeness heuristic only.
 - Do not relabel these columns semantically until the source workbook is decoded manually.
 
-## Base Points Partially Manual
+## Base Points Manual Review
 
-- `base_points.csv` is a reviewed-output table built from `data/interim/base_points_manual_template.csv`.
-- Manual checking is still required for unresolved `site_id`, partial dates, and any point-status interpretation not explicitly written in the source.
+- `base_points_history.csv` retains rows with partial dates, inferred site linkage, and conflict markers instead of dropping them.
+- `base_points_current.csv` picks one operational coordinate set per point, but this does not erase unresolved source ambiguity.
+- A row is treated as `manual review` when at least one of the following is true:
+- `site_id` cannot be resolved safely from project point names or an explicit project mapping.
+- `obs_date_raw` is partial or missing, so `obs_date` cannot be normalized to a full ISO date.
+- The extracted point label is truncated or otherwise suspicious.
+- The coordinate assignment conflicts with another known point cluster.
+- Explicit special case: `Ураков Бугор`, point `3`, `2019-08-14`, because its coordinates are suspiciously aligned with the `Нижний Ураков` point-3 cluster.
 
 ## Interim Outputs
 
@@ -243,17 +257,15 @@ Current dataset status: `draft`.
 
 - Purpose: machine-readable parser log with counts of rows read, missing values, and suspicious records.
 
-### `data/interim/base_points_manual_template.csv`
-
-- Purpose: manual-entry template for stable base-point extraction from `.doc` sources.
-
 ### `data/interim/shoreline_duplicate_report.csv`
 
 - Purpose: duplicate-key manifest for shoreline observations grouped by `(site_id, profile_id, obs_date)`.
 
 ### `data/interim/site_scope_review.csv`
 
-- Purpose: manual site-scope manifest used downstream without silent filtering.
+- Purpose: reviewed site-scope manifest used downstream without silent filtering.
+- Current scope marks the 9 map/source-document sites as `in_project_scope=true`.
+- `suvodskaya` remains in metadata but is explicitly marked outside the current project scope.
 
 ### `data/interim/water_levels_manual_dictionary.md`
 
@@ -272,3 +284,7 @@ Current dataset status: `draft`.
 ### `reports/tables/qc_summary.md`
 
 - Purpose: human-readable QC summary with duplicate checks and missingness tables.
+
+### `reports/tables/base_points_manual_review.csv`
+
+- Purpose: filtered manifest of all base-point rows that still require manual review.

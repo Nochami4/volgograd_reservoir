@@ -16,3 +16,9 @@
 2026-04-04 00:20:54 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
 2026-04-04 00:21:54 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
 2026-04-04 00:21:54 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-04-11 21:11:32 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-04-11 21:11:32 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-04-11 21:12:49 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-04-11 21:12:49 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-04-11 21:13:54 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-04-11 21:13:54 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json

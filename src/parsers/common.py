@@ -398,3 +398,39 @@ def first_existing(paths: Iterable[Path]) -> Path | None:
         if path.exists():
             return path
     return None
+
+
+def merge_with_checks(
+    left: pd.DataFrame,
+    right: pd.DataFrame,
+    *,
+    on: str | list[str],
+    how: str,
+    validate: str,
+    relationship_name: str,
+    require_all_left: bool = True,
+    suffixes: tuple[str, str] = ("", "_right"),
+) -> pd.DataFrame:
+    """Merge two dataframes and fail loudly when the join contract is broken."""
+
+    merged = left.merge(
+        right,
+        on=on,
+        how=how,
+        validate=validate,
+        suffixes=suffixes,
+        indicator=True,
+    )
+    if require_all_left:
+        unmatched = merged["_merge"].ne("both")
+        if unmatched.any():
+            sample = merged.loc[unmatched, on].head(5)
+            if isinstance(sample, pd.Series):
+                sample_payload = sample.astype(str).tolist()
+            else:
+                sample_payload = sample.to_dict(orient="records")
+            raise ValueError(
+                f"Merge check failed for {relationship_name}: {int(unmatched.sum())} left row(s) did not match. "
+                f"Sample keys: {sample_payload}"
+            )
+    return merged.drop(columns=["_merge"])

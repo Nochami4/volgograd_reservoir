@@ -3,7 +3,6 @@
 ## Critical blockers before scientific analysis
 
 - `data/processed/analysis_ready.csv`: Wind coverage is below the 0.8 threshold for many shoreline intervals.
-- `data/processed/base_points.csv`: Some base points still have unresolved site_id and require manual review.
 - `data/processed/shoreline_observations.csv`: Some shoreline observation keys remain conflicting and require manual review.
 - `data/processed/water_levels_raw.csv`: Water level columns remain semantically ambiguous; only neutral technical aggregation is currently safe.
 
@@ -16,16 +15,18 @@
 
 ## Dataset-specific Diagnostics
 
-- `base_points.csv`: 12 rows; unresolved `site_id`: 9; point_status distribution: {'unknown': 12}.
+- `base_points.csv`: 16 rows; unresolved `site_id`: 0; point_status distribution: {'original': 15, 'refined': 1}.
 - `water_levels_raw.csv`: ambiguous neutral columns share = 1.000; rows without full date = 1.000.
 - Sites without any extracted water rows: ['suvodskaya'].
 - `shoreline_duplicate_report.csv`: 3 duplicate key group(s), including 3 conflicting group(s).
-- `site_scope_review.csv`: 10 site(s) still marked `needs_review`.
+- `site_scope_review.csv`: 0 site(s) still marked `needs_review`.
 
 | File | Rows | Columns | Duplicate rows | Duplicate keys | Key columns |
 | --- | ---: | ---: | ---: | ---: | --- |
 | `data/processed/analysis_ready.csv` | 587 | 50 | 0 | 0 | interval_id |
-| `data/processed/base_points.csv` | 12 | 16 | 0 | 0 | base_point_id |
+| `data/processed/base_points.csv` | 16 | 21 | 0 | 0 | base_point_id |
+| `data/processed/base_points_current.csv` | 16 | 20 | 0 | n/a | n/a |
+| `data/processed/base_points_history.csv` | 21 | 20 | 0 | n/a | n/a |
 | `data/processed/interval_metrics.csv` | 587 | 17 | 0 | 0 | interval_id |
 | `data/processed/profiles.csv` | 33 | 9 | 0 | 0 | profile_id |
 | `data/processed/shoreline_observations.csv` | 716 | 19 | 0 | 0 | obs_id |
@@ -45,8 +46,8 @@
 ### `data/processed/base_points.csv`
 
 - `base_points_empty`: 0. An empty base_points layer means shoreline geometry remains only partially anchored.
-- `base_points_missing_site_id_share`: n/a. Share of base-point rows without resolved site_id: 0.750.
-- `base_points_point_status_distribution`: n/a. Point-status distribution: {'unknown': 12}.
+- `base_points_missing_site_id_share`: n/a. Share of base-point rows without resolved site_id: 0.000.
+- `base_points_point_status_distribution`: n/a. Point-status distribution: {'original': 15, 'refined': 1}.
 
 ### `data/processed/shoreline_observations.csv`
 
@@ -78,7 +79,7 @@
 | `days_between` | 0.000 |
 | `end_date` | 0.000 |
 | `exposure_sectors_text` | 0.000 |
-| `in_project_scope` | 1.000 |
+| `in_project_scope` | 0.000 |
 | `interval_id` | 0.000 |
 | `lithology_class` | 0.000 |
 | `lithology_text` | 0.000 |
@@ -123,22 +124,77 @@
 
 | Column | Missing share |
 | --- | ---: |
-| `accuracy_m` | 1.000 |
+| `accuracy_m` | 0.938 |
 | `base_point_id` | 0.000 |
-| `base_point_name` | 0.000 |
+| `base_point_name_norm` | 0.000 |
+| `base_point_name_raw` | 0.000 |
+| `has_uncertain_date` | 0.000 |
 | `is_calculated` | 0.000 |
 | `is_new` | 0.000 |
+| `is_refined` | 0.000 |
 | `is_reinstalled` | 0.000 |
-| `obs_date` | 0.417 |
+| `needs_manual_review` | 0.000 |
+| `note_raw` | 0.812 |
+| `obs_date` | 0.125 |
+| `obs_date_raw` | 0.062 |
 | `point_status` | 0.000 |
-| `qc_flag` | 0.000 |
-| `qc_note` | 0.000 |
-| `site_id` | 0.750 |
+| `review_reason` | 0.812 |
+| `site_id` | 0.000 |
+| `site_name_raw` | 0.000 |
 | `source_file` | 0.000 |
 | `source_row_ref` | 0.000 |
-| `status_note` | 1.000 |
-| `x_m` | 0.167 |
-| `y_m` | 0.167 |
+| `x_m` | 0.000 |
+| `y_m` | 0.000 |
+
+### `data/processed/base_points_current.csv`
+
+| Column | Missing share |
+| --- | ---: |
+| `accuracy_m` | 0.938 |
+| `base_point_name_norm` | 0.000 |
+| `base_point_name_raw` | 0.000 |
+| `has_uncertain_date` | 0.000 |
+| `is_calculated` | 0.000 |
+| `is_new` | 0.000 |
+| `is_refined` | 0.000 |
+| `is_reinstalled` | 0.000 |
+| `needs_manual_review` | 0.000 |
+| `note_raw` | 0.812 |
+| `obs_date` | 0.125 |
+| `obs_date_raw` | 0.062 |
+| `point_status` | 0.000 |
+| `review_reason` | 0.812 |
+| `site_id` | 0.000 |
+| `site_name_raw` | 0.000 |
+| `source_file` | 0.000 |
+| `source_row_ref` | 0.000 |
+| `x_m` | 0.000 |
+| `y_m` | 0.000 |
+
+### `data/processed/base_points_history.csv`
+
+| Column | Missing share |
+| --- | ---: |
+| `accuracy_m` | 0.857 |
+| `base_point_name_norm` | 0.000 |
+| `base_point_name_raw` | 0.000 |
+| `has_uncertain_date` | 0.000 |
+| `is_calculated` | 0.000 |
+| `is_new` | 0.000 |
+| `is_refined` | 0.000 |
+| `is_reinstalled` | 0.000 |
+| `needs_manual_review` | 0.000 |
+| `note_raw` | 0.762 |
+| `obs_date` | 0.190 |
+| `obs_date_raw` | 0.048 |
+| `point_status` | 0.000 |
+| `review_reason` | 0.762 |
+| `site_id` | 0.000 |
+| `site_name_raw` | 0.000 |
+| `source_file` | 0.000 |
+| `source_row_ref` | 0.000 |
+| `x_m` | 0.000 |
+| `y_m` | 0.000 |
 
 ### `data/processed/interval_metrics.csv`
 
