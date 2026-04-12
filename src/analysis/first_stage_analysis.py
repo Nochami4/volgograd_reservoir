@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import textwrap
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
 
 from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, REPORTS_DIR, merge_with_checks, relative_to_root, setup_logging
 
@@ -65,6 +67,46 @@ def classify_history_start(year: float | int | None) -> str:
     if year_int < 1986:
         return "ранний блок (до 1986; в данных старт 1958-1977)"
     return "поздний блок (с 1986/1987)"
+
+
+def wrap_site_label(label: str, width: int = 12) -> str:
+    """Wrap long site labels for figure readability."""
+
+    return "\n".join(textwrap.wrap(str(label), width=width, break_long_words=False, break_on_hyphens=True))
+
+
+def classify_overlap_caution(n_overlap: int) -> str:
+    """Classify caution level for profile-pair overlap."""
+
+    if n_overlap < 3:
+        return "unstable_small_sample"
+    if n_overlap < 10:
+        return "limited_overlap"
+    return "adequate_overlap"
+
+
+def interpret_correlation_strength(value: float | None, n_overlap: int) -> str:
+    """Return a restrained qualitative interpretation of correlation strength."""
+
+    caution_flag = classify_overlap_caution(n_overlap)
+    if caution_flag == "unstable_small_sample":
+        return "unstable_small_sample"
+    if value is None or pd.isna(value):
+        return "insufficient_variation"
+    abs_value = abs(float(value))
+    if caution_flag == "limited_overlap":
+        if abs_value >= 0.7:
+            return "high_but_limited_overlap"
+        if abs_value >= 0.4:
+            return "moderate_but_limited_overlap"
+        return "weak_but_limited_overlap"
+    if abs_value >= 0.9:
+        return "very_high"
+    if abs_value >= 0.7:
+        return "high"
+    if abs_value >= 0.4:
+        return "moderate"
+    return "weak"
 
 
 def load_analysis_safe_subset() -> pd.DataFrame:
@@ -258,6 +300,8 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
                     note_bits.append("Нет полностью сопоставимых интервалов наблюдений между профилями.")
                 elif n_overlap < 3:
                     note_bits.append("Сопоставимых интервалов мало; коэффициенты корреляции нестабильны.")
+                elif n_overlap < 10:
+                    note_bits.append("Сопоставимых интервалов меньше 10; интерпретация силы связи должна быть осторожной.")
 
                 def corr_or_nan(column_a: str, column_b: str, method: str) -> float | None:
                     if n_overlap < 2:
@@ -279,6 +323,7 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
                 spearman_retreat = corr_or_nan("retreat_m_a", "retreat_m_b", "spearman")
                 pearson_rate = corr_or_nan("retreat_rate_m_per_year_a", "retreat_rate_m_per_year_b", "pearson")
                 spearman_rate = corr_or_nan("retreat_rate_m_per_year_a", "retreat_rate_m_per_year_b", "spearman")
+                overlap_caution_flag = classify_overlap_caution(n_overlap)
 
                 if n_overlap >= 2 and all(value is None for value in [pearson_retreat, spearman_retreat, pearson_rate, spearman_rate]):
                     note_bits.append("Один из рядов почти константен или содержит недостаточно вариации для оценки корреляции.")
@@ -294,6 +339,9 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
                         "spearman_retreat_m": spearman_retreat,
                         "pearson_retreat_rate_m_per_year": pearson_rate,
                         "spearman_retreat_rate_m_per_year": spearman_rate,
+                        "overlap_caution_flag": overlap_caution_flag,
+                        "pearson_rate_strength": interpret_correlation_strength(pearson_rate, n_overlap),
+                        "spearman_rate_strength": interpret_correlation_strength(spearman_rate, n_overlap),
                         "is_low_sample": n_overlap < 3,
                         "note": " ".join(note_bits) if note_bits else None,
                     }
@@ -308,6 +356,85 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
     return summary_df, pairs_df
 
 
+def build_profile_correlation_presentation(summary_df: pd.DataFrame, subset: pd.DataFrame) -> pd.DataFrame:
+    """Build a compact site-level presentation table for profile agreement."""
+
+    if summary_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "site_id",
+                "site_name",
+                "n_profiles",
+                "overlap_range",
+                "mean_pearson_retreat_rate_m_per_year",
+                "mean_spearman_retreat_rate_m_per_year",
+                "profile_agreement_summary",
+                "has_duplicate_conflict_context",
+            ]
+        )
+
+    profile_counts = (
+        subset.groupby(["site_id", "site_name"], dropna=False)["profile_id"]
+        .nunique()
+        .rename("n_profiles")
+        .reset_index()
+    )
+    duplicate_flags = (
+        subset.groupby(["site_id", "site_name"], dropna=False)["has_conflicting_shoreline_duplicates"]
+        .any()
+        .rename("has_duplicate_conflict_context")
+        .reset_index()
+    )
+
+    presentation = (
+        summary_df.groupby(["site_id", "site_name"], dropna=False)
+        .agg(
+            min_overlap=("n_overlap_intervals", "min"),
+            max_overlap=("n_overlap_intervals", "max"),
+            mean_pearson_retreat_rate_m_per_year=("pearson_retreat_rate_m_per_year", "mean"),
+            mean_spearman_retreat_rate_m_per_year=("spearman_retreat_rate_m_per_year", "mean"),
+        )
+        .reset_index()
+    )
+    presentation["overlap_range"] = presentation.apply(
+        lambda row: f"{int(row['min_overlap'])}–{int(row['max_overlap'])}",
+        axis=1,
+    )
+    presentation["profile_agreement_summary"] = presentation.apply(
+        lambda row: interpret_correlation_strength(row["mean_pearson_retreat_rate_m_per_year"], int(row["max_overlap"])),
+        axis=1,
+    )
+    presentation = merge_with_checks(
+        presentation,
+        profile_counts,
+        on=["site_id", "site_name"],
+        how="left",
+        validate="one_to_one",
+        relationship_name="correlation presentation -> profile counts",
+    )
+    presentation = merge_with_checks(
+        presentation,
+        duplicate_flags,
+        on=["site_id", "site_name"],
+        how="left",
+        validate="one_to_one",
+        relationship_name="correlation presentation -> duplicate flags",
+    )
+    presentation["has_duplicate_conflict_context"] = presentation["has_duplicate_conflict_context"].eq(True)
+    return presentation[
+        [
+            "site_id",
+            "site_name",
+            "n_profiles",
+            "overlap_range",
+            "mean_pearson_retreat_rate_m_per_year",
+            "mean_spearman_retreat_rate_m_per_year",
+            "profile_agreement_summary",
+            "has_duplicate_conflict_context",
+        ]
+    ].sort_values("site_name").reset_index(drop=True)
+
+
 def plot_retreat_distributions(subset: pd.DataFrame, output_path: Path) -> None:
     """Plot first-stage retreat distributions."""
 
@@ -319,31 +446,38 @@ def plot_retreat_distributions(subset: pd.DataFrame, output_path: Path) -> None:
         .index.tolist()
     )
 
-    fig, axes = plt.subplots(2, 2, figsize=(16, 10))
+    fig, axes = plt.subplots(2, 2, figsize=(16, 11))
     axes = axes.ravel()
+    wrapped_sites = [wrap_site_label(site, width=12) for site in ordered_sites]
 
     axes[0].hist(plot_df["retreat_m"].dropna(), bins=25, color="#4E79A7", edgecolor="white")
-    axes[0].set_title("Распределение retreat_m")
+    axes[0].set_title("Распределение retreat_m\nЗнак отражает изменение положения бровки между концом и началом интервала")
     axes[0].set_xlabel("retreat_m, м")
     axes[0].set_ylabel("Частота")
 
     axes[1].hist(plot_df["retreat_rate_m_per_year"].dropna(), bins=25, color="#E15759", edgecolor="white")
-    axes[1].set_title("Распределение retreat_rate_m_per_year")
+    axes[1].set_title("Распределение retreat_rate_m_per_year\nЗнак совпадает со знаком retreat_m и показывает направление изменения в нормированной системе профиля")
     axes[1].set_xlabel("retreat_rate_m_per_year, м/год")
     axes[1].set_ylabel("Частота")
 
     rate_data = [plot_df.loc[plot_df["site_name"].eq(site), "retreat_rate_m_per_year"].dropna().to_numpy() for site in ordered_sites]
-    axes[2].boxplot(rate_data, tick_labels=ordered_sites, patch_artist=True)
+    axes[2].boxplot(rate_data, tick_labels=wrapped_sites, patch_artist=True)
     axes[2].set_title("Распределение скоростей по участкам")
     axes[2].set_ylabel("retreat_rate_m_per_year, м/год")
-    axes[2].tick_params(axis="x", rotation=45)
+    axes[2].tick_params(axis="x", rotation=0, labelsize=9)
 
     abs_data = [plot_df.loc[plot_df["site_name"].eq(site), "retreat_abs_m"].dropna().to_numpy() for site in ordered_sites]
-    axes[3].boxplot(abs_data, tick_labels=ordered_sites, patch_artist=True)
+    axes[3].boxplot(abs_data, tick_labels=wrapped_sites, patch_artist=True)
     axes[3].set_title("Абсолютное смещение бровки по участкам")
     axes[3].set_ylabel("retreat_abs_m, м")
-    axes[3].tick_params(axis="x", rotation=45)
+    axes[3].tick_params(axis="x", rotation=0, labelsize=9)
 
+    fig.suptitle(
+        "Распределения интервалов переформирования\n"
+        "Важно: знак `retreat_m` и `retreat_rate_m_per_year` показывает направление изменения в нормированной профильной системе, а не готовую физическую интерпретацию эрозии/аккумуляции.",
+        fontsize=12,
+        y=0.98,
+    )
     fig.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=180, bbox_inches="tight")
@@ -377,6 +511,11 @@ def plot_site_interval_timelines(subset: pd.DataFrame, output_path: Path) -> Non
     ax.set_xlabel("Период наблюдений")
     ax.set_ylabel("Участок / профиль")
     ax.grid(axis="x", alpha=0.3)
+    legend_handles = [
+        Line2D([0], [0], color="#4E79A7", lw=3, label="Обычный профильный контекст"),
+        Line2D([0], [0], color="#E15759", lw=3, label="Duplicate-conflict context"),
+    ]
+    ax.legend(handles=legend_handles, loc="upper left", frameon=True)
     fig.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=180, bbox_inches="tight")
@@ -449,6 +588,7 @@ def write_first_stage_outputs(subset: pd.DataFrame) -> dict[str, Path]:
     periods_summary_path = REPORTS_DIR / "tables" / "01_periods_summary.csv"
     corr_summary_path = REPORTS_DIR / "tables" / "02_profile_correlation_summary.csv"
     corr_pairs_path = REPORTS_DIR / "tables" / "02_profile_correlation_pairs.csv"
+    corr_presentation_path = REPORTS_DIR / "tables" / "02_profile_correlation_presentation.csv"
     distributions_path = REPORTS_DIR / "figures" / "01_retreat_distributions.png"
     timelines_path = REPORTS_DIR / "figures" / "01_site_interval_timelines.png"
     heatmaps_path = REPORTS_DIR / "figures" / "02_profile_correlation_heatmaps.png"
@@ -460,9 +600,11 @@ def write_first_stage_outputs(subset: pd.DataFrame) -> dict[str, Path]:
     subset.to_csv(safe_subset_path, index=False)
     periods_summary = build_periods_summary(subset)
     corr_summary, corr_pairs = build_profile_correlation_tables(subset)
+    corr_presentation = build_profile_correlation_presentation(corr_summary, subset)
     periods_summary.to_csv(periods_summary_path, index=False)
     corr_summary.to_csv(corr_summary_path, index=False)
     corr_pairs.to_csv(corr_pairs_path, index=False)
+    corr_presentation.to_csv(corr_presentation_path, index=False)
 
     plot_retreat_distributions(subset, distributions_path)
     plot_site_interval_timelines(subset, timelines_path)
@@ -473,6 +615,7 @@ def write_first_stage_outputs(subset: pd.DataFrame) -> dict[str, Path]:
         "periods_summary": periods_summary_path,
         "profile_correlation_summary": corr_summary_path,
         "profile_correlation_pairs": corr_pairs_path,
+        "profile_correlation_presentation": corr_presentation_path,
         "retreat_distributions_figure": distributions_path,
         "site_interval_timelines_figure": timelines_path,
         "profile_correlation_heatmaps_figure": heatmaps_path,
