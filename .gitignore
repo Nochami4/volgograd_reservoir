@@ -8,10 +8,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Generated outputs
-reports/tables/
-reports/presentation/
-data/interim/
-data/processed/
+
 
 # Local env
 .venv/
