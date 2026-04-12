@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
+from matplotlib.ticker import MaxNLocator
 
 from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, REPORTS_DIR, merge_with_checks, relative_to_root, setup_logging
 
@@ -57,6 +58,64 @@ ANALYSIS_SAFE_COLUMNS = [
     "qc_note_analysis_safe",
 ]
 
+DISPLAY_LABELS = {
+    "context": {
+        "standard": "Обычный контекст наблюдений",
+        "conflict": "Контекст с конфликтующими дублями\nв исходном shoreline-слое",
+    },
+    "overlap_caution_flag": {
+        "unstable_small_sample": "Очень мало общих интервалов",
+        "limited_overlap": "Общих интервалов мало",
+        "adequate_overlap": "Общих интервалов достаточно",
+    },
+    "correlation_strength": {
+        "unstable_small_sample": "Оценка нестабильна из-за малого числа интервалов",
+        "insufficient_variation": "Недостаточно вариации для оценки связи",
+        "high_but_limited_overlap": "Высокая, но при малом числе общих интервалов",
+        "moderate_but_limited_overlap": "Умеренная, но при малом числе общих интервалов",
+        "weak_but_limited_overlap": "Слабая, но при малом числе общих интервалов",
+        "very_high": "Очень высокая",
+        "high": "Высокая",
+        "moderate": "Умеренная",
+        "weak": "Слабая",
+    },
+}
+
+FIGURE_STYLE = {
+    "font.family": "DejaVu Sans",
+    "axes.titlesize": 13,
+    "axes.labelsize": 11,
+    "xtick.labelsize": 9.5,
+    "ytick.labelsize": 9.5,
+    "legend.fontsize": 9.5,
+    "figure.titlesize": 15,
+    "axes.titleweight": "semibold",
+    "axes.edgecolor": "#6F7680",
+    "axes.linewidth": 0.8,
+    "grid.color": "#CFD6DE",
+    "grid.linewidth": 0.7,
+    "grid.alpha": 0.7,
+    "axes.grid": False,
+    "savefig.facecolor": "white",
+    "figure.facecolor": "white",
+}
+
+PALETTE = {
+    "primary": "#456D9C",
+    "primary_light": "#8FA7C4",
+    "accent": "#B85C5C",
+    "neutral": "#7D8792",
+    "grid": "#D7DDE5",
+    "hist_signed": "#5B7EA4",
+    "hist_rate": "#C46C5E",
+    "box_fill": "#7EA0BF",
+    "box_fill_alt": "#D9B38C",
+    "abs_fill": "#AAB7C4",
+}
+
+EXPORT_DPI = 260
+EXPORT_SIDE_FORMATS = (".svg", ".pdf")
+
 
 def classify_history_start(year: float | int | None) -> str:
     """Group sites into an early-history and late-history block for task 1."""
@@ -73,6 +132,76 @@ def wrap_site_label(label: str, width: int = 12) -> str:
     """Wrap long site labels for figure readability."""
 
     return "\n".join(textwrap.wrap(str(label), width=width, break_long_words=False, break_on_hyphens=True))
+
+
+def translate_display_label(group: str, value: str | None) -> str:
+    """Translate service labels into human-readable Russian strings."""
+
+    if value is None or pd.isna(value):
+        return "Не указано"
+    return DISPLAY_LABELS.get(group, {}).get(str(value), str(value))
+
+
+def normalize_profile_label(profile_name: str | None, profile_id: str | None = None) -> str:
+    """Convert raw profile names to compact display labels."""
+
+    value = str(profile_name or profile_id or "Профиль без названия").strip()
+    value = value.replace("ПРОФИЛЬ", "Профиль").replace("№ ", "№ ").replace("№", "№ ")
+    value = " ".join(value.split())
+    return value
+
+
+def wrap_display_label(label: str, width: int = 18, max_lines: int = 3) -> str:
+    """Wrap long labels and keep them compact."""
+
+    wrapped = textwrap.wrap(str(label), width=width, break_long_words=False, break_on_hyphens=True)
+    if len(wrapped) <= max_lines:
+        return "\n".join(wrapped)
+    trimmed = wrapped[: max_lines - 1]
+    remainder = " ".join(wrapped[max_lines - 1 :])
+    trimmed.append(textwrap.shorten(remainder, width=width, placeholder="…"))
+    return "\n".join(trimmed)
+
+
+def format_site_profile_label(site_name: str, profile_name: str | None, profile_id: str | None = None) -> str:
+    """Build a readable combined label for timelines."""
+
+    site_label = wrap_display_label(str(site_name), width=18, max_lines=2)
+    profile_label = wrap_display_label(normalize_profile_label(profile_name, profile_id), width=18, max_lines=2)
+    return f"{site_label}\n{profile_label}"
+
+
+def profile_sort_key(profile_num: object, profile_name: object, profile_id: object) -> tuple[float, str]:
+    """Return a stable sort key for profiles without changing analytical meaning."""
+
+    numeric = pd.to_numeric(pd.Series([profile_num]), errors="coerce").iloc[0]
+    if pd.notna(numeric):
+        return float(numeric), str(profile_name or profile_id or "")
+    return float("inf"), str(profile_name or profile_id or "")
+
+
+def set_academic_style() -> None:
+    """Apply a restrained, report-friendly matplotlib style."""
+
+    plt.rcParams.update(FIGURE_STYLE)
+
+
+def style_axes(ax: plt.Axes, grid_axis: str = "y") -> None:
+    """Apply a consistent axis appearance."""
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(axis=grid_axis, color=PALETTE["grid"], linewidth=0.8, alpha=0.7)
+    ax.set_axisbelow(True)
+
+
+def export_figure(fig: plt.Figure, output_path: Path) -> None:
+    """Save figure with safe margins and archival vector copies."""
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", pad_inches=0.18, facecolor="white")
+    for suffix in EXPORT_SIDE_FORMATS:
+        fig.savefig(output_path.with_suffix(suffix), bbox_inches="tight", pad_inches=0.18, facecolor="white")
 
 
 def classify_overlap_caution(n_overlap: int) -> str:
@@ -334,6 +463,8 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
                         "site_name": site_name,
                         "profile_id_a": profile_id_a,
                         "profile_id_b": profile_id_b,
+                        "profile_name_a": merged["profile_name_a"].dropna().iloc[0] if not merged["profile_name_a"].dropna().empty else None,
+                        "profile_name_b": merged["profile_name_b"].dropna().iloc[0] if not merged["profile_name_b"].dropna().empty else None,
                         "n_overlap_intervals": n_overlap,
                         "pearson_retreat_m": pearson_retreat,
                         "spearman_retreat_m": spearman_retreat,
@@ -438,6 +569,7 @@ def build_profile_correlation_presentation(summary_df: pd.DataFrame, subset: pd.
 def plot_retreat_distributions(subset: pd.DataFrame, output_path: Path) -> None:
     """Plot first-stage retreat distributions."""
 
+    set_academic_style()
     plot_df = subset.copy()
     ordered_sites = (
         plot_df.groupby("site_name")["retreat_rate_abs_m_per_year"]
@@ -446,79 +578,151 @@ def plot_retreat_distributions(subset: pd.DataFrame, output_path: Path) -> None:
         .index.tolist()
     )
 
-    fig, axes = plt.subplots(2, 2, figsize=(16, 11))
+    fig, axes = plt.subplots(2, 2, figsize=(17, 11.5))
     axes = axes.ravel()
-    wrapped_sites = [wrap_site_label(site, width=12) for site in ordered_sites]
+    wrapped_sites = [wrap_display_label(site, width=12, max_lines=2) for site in ordered_sites]
 
-    axes[0].hist(plot_df["retreat_m"].dropna(), bins=25, color="#4E79A7", edgecolor="white")
-    axes[0].set_title("Распределение retreat_m\nЗнак отражает изменение положения бровки между концом и началом интервала")
-    axes[0].set_xlabel("retreat_m, м")
+    axes[0].hist(plot_df["retreat_m"].dropna(), bins=24, color=PALETTE["hist_signed"], edgecolor="white", alpha=0.95)
+    axes[0].axvline(0, color=PALETTE["neutral"], linewidth=1.2, linestyle="--")
+    axes[0].set_title("Смещение бровки за интервал")
+    axes[0].set_xlabel("Смещение бровки, м")
     axes[0].set_ylabel("Частота")
+    style_axes(axes[0], grid_axis="y")
+    axes[0].xaxis.set_major_locator(MaxNLocator(nbins=7))
 
-    axes[1].hist(plot_df["retreat_rate_m_per_year"].dropna(), bins=25, color="#E15759", edgecolor="white")
-    axes[1].set_title("Распределение retreat_rate_m_per_year\nЗнак совпадает со знаком retreat_m и показывает направление изменения в нормированной системе профиля")
-    axes[1].set_xlabel("retreat_rate_m_per_year, м/год")
+    axes[1].hist(plot_df["retreat_rate_m_per_year"].dropna(), bins=24, color=PALETTE["hist_rate"], edgecolor="white", alpha=0.95)
+    axes[1].axvline(0, color=PALETTE["neutral"], linewidth=1.2, linestyle="--")
+    axes[1].set_title("Скорость смещения бровки за интервал")
+    axes[1].set_xlabel("Скорость смещения, м/год")
     axes[1].set_ylabel("Частота")
+    style_axes(axes[1], grid_axis="y")
+    axes[1].xaxis.set_major_locator(MaxNLocator(nbins=7))
 
     rate_data = [plot_df.loc[plot_df["site_name"].eq(site), "retreat_rate_m_per_year"].dropna().to_numpy() for site in ordered_sites]
     axes[2].boxplot(rate_data, tick_labels=wrapped_sites, patch_artist=True)
-    axes[2].set_title("Распределение скоростей по участкам")
-    axes[2].set_ylabel("retreat_rate_m_per_year, м/год")
+    for box in axes[2].artists:
+        box.set(facecolor=PALETTE["box_fill"], edgecolor=PALETTE["primary"], alpha=0.85)
+    for patch in axes[2].patches:
+        patch.set(facecolor=PALETTE["box_fill"], edgecolor=PALETTE["primary"], alpha=0.9)
+    axes[2].axhline(0, color=PALETTE["neutral"], linewidth=1.0, linestyle="--")
+    axes[2].set_title("Скорость смещения по участкам")
+    axes[2].set_ylabel("Скорость смещения, м/год")
     axes[2].tick_params(axis="x", rotation=0, labelsize=9)
+    style_axes(axes[2], grid_axis="y")
 
     abs_data = [plot_df.loc[plot_df["site_name"].eq(site), "retreat_abs_m"].dropna().to_numpy() for site in ordered_sites]
     axes[3].boxplot(abs_data, tick_labels=wrapped_sites, patch_artist=True)
-    axes[3].set_title("Абсолютное смещение бровки по участкам")
-    axes[3].set_ylabel("retreat_abs_m, м")
+    for patch in axes[3].patches:
+        patch.set(facecolor=PALETTE["abs_fill"], edgecolor=PALETTE["neutral"], alpha=0.95)
+    axes[3].set_title("Абсолютная величина смещения по участкам")
+    axes[3].set_ylabel("Абсолютная величина смещения, м")
     axes[3].tick_params(axis="x", rotation=0, labelsize=9)
+    style_axes(axes[3], grid_axis="y")
 
     fig.suptitle(
-        "Распределения интервалов переформирования\n"
-        "Важно: знак `retreat_m` и `retreat_rate_m_per_year` показывает направление изменения в нормированной профильной системе, а не готовую физическую интерпретацию эрозии/аккумуляции.",
-        fontsize=12,
-        y=0.98,
+        "Распределения показателей переформирования береговой бровки",
+        y=0.995,
     )
-    fig.tight_layout()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    fig.text(
+        0.015,
+        0.018,
+        "Примечание. Знак смещения и скорости показывает направление изменения в нормированной профильной системе координат.\n"
+        "Для интерпретации величины изменения без учёта знака используйте абсолютные показатели на нижней правой панели.",
+        ha="left",
+        va="bottom",
+        fontsize=9.5,
+        color="#3D4752",
+    )
+    fig.tight_layout(rect=[0.0, 0.08, 1.0, 0.95])
+    export_figure(fig, output_path)
     plt.close(fig)
 
 
 def plot_site_interval_timelines(subset: pd.DataFrame, output_path: Path) -> None:
     """Plot observation intervals by site/profile."""
 
+    set_academic_style()
     plot_df = subset.copy()
     plot_df["date_start_dt"] = pd.to_datetime(plot_df["date_start"])
     plot_df["date_end_dt"] = pd.to_datetime(plot_df["date_end"])
-    plot_df["label"] = plot_df["site_name"] + " / " + plot_df["profile_name"].fillna(plot_df["profile_id"])
-    labels = plot_df["label"].drop_duplicates().tolist()
+    profile_order = (
+        plot_df[["site_name", "profile_num", "profile_name", "profile_id"]]
+        .drop_duplicates()
+        .sort_values(
+            by=["site_name", "profile_num", "profile_name", "profile_id"],
+            key=lambda col: col.map(str) if col.name == "site_name" else col,
+            na_position="last",
+        )
+    )
+    profile_order["label"] = profile_order.apply(
+        lambda row: format_site_profile_label(row["site_name"], row["profile_name"], row["profile_id"]),
+        axis=1,
+    )
+    labels = profile_order["label"].tolist()
     y_lookup = {label: idx for idx, label in enumerate(labels)}
+    plot_df = plot_df.merge(
+        profile_order[["site_name", "profile_num", "profile_name", "profile_id", "label"]],
+        on=["site_name", "profile_num", "profile_name", "profile_id"],
+        how="left",
+        validate="many_to_one",
+    )
 
-    fig, ax = plt.subplots(figsize=(16, max(8, 0.35 * len(labels))))
+    fig_height = max(9.0, 0.46 * len(labels) + 1.8)
+    fig, ax = plt.subplots(figsize=(17.5, fig_height), constrained_layout=True)
     for _, row in plot_df.iterrows():
         ax.hlines(
             y=y_lookup[row["label"]],
             xmin=row["date_start_dt"],
             xmax=row["date_end_dt"],
-            color="#4E79A7" if not row["has_conflicting_shoreline_duplicates"] else "#E15759",
-            linewidth=2.5,
-            alpha=0.8,
+            color=PALETTE["primary"] if not row["has_conflicting_shoreline_duplicates"] else PALETTE["accent"],
+            linewidth=3.0,
+            alpha=0.92,
+            zorder=3,
+        )
+        ax.scatter(
+            [row["date_start_dt"], row["date_end_dt"]],
+            [y_lookup[row["label"]], y_lookup[row["label"]]],
+            color=PALETTE["primary"] if not row["has_conflicting_shoreline_duplicates"] else PALETTE["accent"],
+            s=14,
+            zorder=4,
         )
 
     ax.set_yticks(list(y_lookup.values()))
     ax.set_yticklabels(labels)
     ax.set_title("Интервалы наблюдений по участкам и профилям")
-    ax.set_xlabel("Период наблюдений")
-    ax.set_ylabel("Участок / профиль")
-    ax.grid(axis="x", alpha=0.3)
+    ax.set_xlabel("Годы наблюдений")
+    ax.set_ylabel("Участок и профиль")
+    style_axes(ax, grid_axis="x")
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(axis="y", length=0)
+    ax.invert_yaxis()
+
+    site_breaks = (
+        profile_order.groupby("site_name", dropna=False)
+        .agg(y_min=("label", lambda values: min(y_lookup[value] for value in values)), y_max=("label", lambda values: max(y_lookup[value] for value in values)))
+        .reset_index()
+    )
+    for idx, row in site_breaks.iterrows():
+        if idx % 2 == 0:
+            ax.axhspan(row["y_min"] - 0.45, row["y_max"] + 0.45, color="#F5F7FA", zorder=0)
+        ax.axhline(row["y_max"] + 0.5, color=PALETTE["grid"], linewidth=0.8, zorder=1)
+
     legend_handles = [
-        Line2D([0], [0], color="#4E79A7", lw=3, label="Обычный профильный контекст"),
-        Line2D([0], [0], color="#E15759", lw=3, label="Duplicate-conflict context"),
+        Line2D([0], [0], color=PALETTE["primary"], lw=3, label=DISPLAY_LABELS["context"]["standard"]),
+        Line2D([0], [0], color=PALETTE["accent"], lw=3, label=DISPLAY_LABELS["context"]["conflict"]),
     ]
-    ax.legend(handles=legend_handles, loc="upper left", frameon=True)
-    fig.tight_layout()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    ax.legend(handles=legend_handles, loc="upper right", frameon=True, facecolor="white", edgecolor=PALETTE["grid"])
+    ax.text(
+        0.0,
+        1.02,
+        "Красным показаны интервалы, для которых в профильном контексте сохранён признак конфликтующих дублей исходной береговой линии.",
+        transform=ax.transAxes,
+        ha="left",
+        va="bottom",
+        fontsize=9.2,
+        color="#46505B",
+    )
+    export_figure(fig, output_path)
     plt.close(fig)
 
 
@@ -528,6 +732,10 @@ def _build_heatmap_matrix(site_summary: pd.DataFrame, value_column: str) -> tupl
     profile_ids = sorted(set(site_summary["profile_id_a"]).union(site_summary["profile_id_b"]))
     matrix = np.full((len(profile_ids), len(profile_ids)), np.nan)
     index = {profile_id: idx for idx, profile_id in enumerate(profile_ids)}
+    label_lookup: dict[str, str] = {}
+    for _, row in site_summary.iterrows():
+        label_lookup.setdefault(row["profile_id_a"], normalize_profile_label(row.get("profile_name_a"), row["profile_id_a"]))
+        label_lookup.setdefault(row["profile_id_b"], normalize_profile_label(row.get("profile_name_b"), row["profile_id_b"]))
     for profile_id, idx in index.items():
         matrix[idx, idx] = 1.0
     for _, row in site_summary.iterrows():
@@ -537,7 +745,13 @@ def _build_heatmap_matrix(site_summary: pd.DataFrame, value_column: str) -> tupl
         if pd.notna(value):
             matrix[i, j] = float(value)
             matrix[j, i] = float(value)
-    return matrix, profile_ids
+    return matrix, [wrap_display_label(label_lookup.get(profile_id, str(profile_id)), width=12, max_lines=2) for profile_id in profile_ids]
+
+
+def _heatmap_text_color(value: float) -> str:
+    """Choose contrasting annotation color for heatmap cells."""
+
+    return "white" if abs(value) >= 0.55 else "#20262D"
 
 
 def plot_profile_correlation_heatmaps(summary_df: pd.DataFrame, output_path: Path) -> None:
@@ -546,38 +760,89 @@ def plot_profile_correlation_heatmaps(summary_df: pd.DataFrame, output_path: Pat
     if summary_df.empty:
         return
 
+    set_academic_style()
     sites = sorted(summary_df["site_name"].dropna().unique())
-    fig, axes = plt.subplots(len(sites), 2, figsize=(14, max(4 * len(sites), 8)), constrained_layout=True)
-    if len(sites) == 1:
-        axes = np.array([axes])
+    ncols = 2
+    nrows = int(np.ceil(len(sites) / ncols))
+    fig = plt.figure(figsize=(18.0, max(3.5 * nrows + 1.5, 10.5)))
+    outer = fig.add_gridspec(nrows=nrows, ncols=ncols, wspace=0.12, hspace=0.34)
+    image = None
 
-    for row_idx, site_name in enumerate(sites):
+    for site_idx, site_name in enumerate(sites):
         site_summary = summary_df.loc[summary_df["site_name"].eq(site_name)].copy()
+        site_stats = {
+            "min_overlap": int(site_summary["n_overlap_intervals"].min()),
+            "max_overlap": int(site_summary["n_overlap_intervals"].max()),
+            "has_limited_overlap": site_summary["overlap_caution_flag"].isin(["unstable_small_sample", "limited_overlap"]).any(),
+        }
+        row_idx = site_idx // ncols
+        col_group_idx = site_idx % ncols
+        inner = outer[row_idx, col_group_idx].subgridspec(1, 2, wspace=0.12)
+
         for col_idx, (metric, title) in enumerate(
             [
-                ("pearson_retreat_rate_m_per_year", "Pearson по retreat_rate_m_per_year"),
-                ("spearman_retreat_rate_m_per_year", "Spearman по retreat_rate_m_per_year"),
+                ("pearson_retreat_rate_m_per_year", "Пирсон"),
+                ("spearman_retreat_rate_m_per_year", "Спирмен"),
             ]
         ):
-            ax = axes[row_idx, col_idx]
+            ax = fig.add_subplot(inner[0, col_idx])
             matrix, labels = _build_heatmap_matrix(site_summary, metric)
             image = ax.imshow(matrix, vmin=-1, vmax=1, cmap="coolwarm")
             ax.set_xticks(range(len(labels)))
-            ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+            ax.set_xticklabels(labels, rotation=32, ha="right", rotation_mode="anchor", fontsize=9)
             ax.set_yticks(range(len(labels)))
-            ax.set_yticklabels(labels, fontsize=8)
-            ax.set_title(f"{site_name}\n{title}", fontsize=10)
+            ax.set_yticklabels(labels, fontsize=9)
+            if col_idx == 0:
+                overlap_note = (
+                    f"Общие интервалы: {site_stats['min_overlap']}-{site_stats['max_overlap']}, осторожно"
+                    if site_stats["has_limited_overlap"]
+                    else f"Общие интервалы: {site_stats['min_overlap']}-{site_stats['max_overlap']}"
+                )
+                ax.set_title(
+                    f"{site_name}\n{overlap_note}\n{title}",
+                    fontsize=9.7,
+                    pad=7,
+                )
+            else:
+                ax.set_title(title, fontsize=11, pad=10)
+            ax.set_xticks(np.arange(-0.5, len(labels), 1), minor=True)
+            ax.set_yticks(np.arange(-0.5, len(labels), 1), minor=True)
+            ax.grid(which="minor", color="white", linewidth=1.2)
+            ax.tick_params(which="minor", bottom=False, left=False)
             for i in range(matrix.shape[0]):
                 for j in range(matrix.shape[1]):
                     if pd.notna(matrix[i, j]):
-                        ax.text(j, i, f"{matrix[i, j]:.2f}", ha="center", va="center", fontsize=7, color="black")
+                        ax.text(
+                            j,
+                            i,
+                            f"{matrix[i, j]:.2f}",
+                            ha="center",
+                            va="center",
+                            fontsize=8.5,
+                            color=_heatmap_text_color(float(matrix[i, j])),
+                        )
                     else:
-                        ax.text(j, i, "NA", ha="center", va="center", fontsize=7, color="gray")
-
-    cbar = fig.colorbar(image, ax=axes.ravel().tolist(), shrink=0.6)
-    cbar.set_label("Коэффициент корреляции")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+                        ax.text(j, i, "н/д", ha="center", va="center", fontsize=7.5, color="#5E6771")
+    fig.suptitle(
+        "Внутриучастковые корреляции скоростей смещения между профилями",
+        y=0.99,
+        fontsize=14.5,
+    )
+    fig.text(
+        0.013,
+        0.014,
+        "Примечание. Коэффициенты рассчитаны только по полностью сопоставимым интервалам наблюдений. "
+        "Если общих интервалов мало, значения следует трактовать как ориентировочные.",
+        ha="left",
+        va="bottom",
+        fontsize=9.5,
+        color="#46505B",
+    )
+    fig.subplots_adjust(left=0.055, right=0.91, top=0.93, bottom=0.055)
+    cbar = fig.colorbar(image, ax=fig.axes, shrink=0.82, pad=0.01, fraction=0.025)
+    cbar.set_label("Коэффициент корреляции", fontsize=11)
+    cbar.ax.tick_params(labelsize=9)
+    export_figure(fig, output_path)
     plt.close(fig)
 
 
