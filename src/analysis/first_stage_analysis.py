@@ -41,6 +41,18 @@ ANALYSIS_SAFE_COLUMNS = [
     "start_date",
     "end_date",
     "n_observations",
+    "n_water_obs",
+    "coverage_water",
+    "mean_water_level_mean_annual_m_abs",
+    "max_water_level_mean_annual_m_abs",
+    "min_water_level_mean_annual_m_abs",
+    "range_water_level_mean_annual_m_abs",
+    "mean_water_level_max_annual_m_abs",
+    "max_water_level_max_annual_m_abs",
+    "min_water_level_max_annual_m_abs",
+    "range_water_level_max_annual_m_abs",
+    "water_context_scope",
+    "water_time_resolution",
     "in_project_scope",
     "scope_status",
     "scope_note",
@@ -56,6 +68,27 @@ ANALYSIS_SAFE_COLUMNS = [
     "qc_note_analysis",
     "qc_flag_analysis_safe",
     "qc_note_analysis_safe",
+]
+FINAL_MODELING_DROP_COLUMNS = [
+    "notes",
+    "qc_note",
+    "mean_level",
+    "max_level",
+    "min_level",
+    "range_level",
+    "calc_method",
+    "n_raw_points_used",
+    "in_project_scope",
+    "scope_status",
+    "scope_note",
+    "start_date",
+    "end_date",
+    "n_observations",
+    "duplicate_conflict_obs_dates",
+    "duplicate_conflict_note",
+    "qc_flag",
+    "qc_flag_analysis",
+    "qc_note_analysis",
 ]
 
 DISPLAY_LABELS = {
@@ -90,7 +123,8 @@ DISPLAY_LABELS = {
         "absolute_metric": "Беззнаковый показатель интенсивности удобен для межучасткового сравнения, потому что отражает масштаб изменения без смешения с направлением.",
         "timeline_reading": "Линия показывает профиль; точки показывают даты наблюдений; длина линии отражает период от первого до последнего наблюдения.",
         "duplicate_context": "Конфликтующие shoreline duplicates не удаляются молча: такие профили сохраняются в выборке и помечаются как контекст, требующий осторожности.",
-        "correlation_reading": "Корреляции рассчитаны только по полностью сопоставимым интервалам наблюдений между профилями одного участка.",
+        "correlation_reading": "Корреляции рассчитаны только внутри одного участка, только по полностью совпадающим `date_start/date_end`, без импутации и по signed `retreat_rate_m_per_year`; Pearson показывает линейную связь, Spearman показывает монотонную связь, а интерпретация зависит от `n_overlap`.",
+        "correlation_negative": "Отрицательная корреляция здесь означает противоположное поведение signed скоростей в принятой профильной конвенции, а не готовую физическую категорию; при малом overlap и/или конфликтном duplicate-context нужна дополнительная осторожность.",
     },
 }
 
@@ -127,7 +161,9 @@ PALETTE = {
 }
 
 EXPORT_DPI = 260
-EXPORT_SIDE_FORMATS = (".svg", ".pdf")
+OUTPUT_FORMATS = ("png",)
+LEGACY_EXPORT_SUFFIXES = (".svg", ".pdf")
+ZERO_NEAR_ZERO_RATE_THRESHOLD = 0.1
 
 
 def classify_history_start(year: float | int | None) -> str:
@@ -209,12 +245,16 @@ def style_axes(ax: plt.Axes, grid_axis: str = "y") -> None:
 
 
 def export_figure(fig: plt.Figure, output_path: Path) -> None:
-    """Save figure with safe margins and archival vector copies."""
+    """Save figure in the configured output formats and clear legacy duplicates."""
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", pad_inches=0.18, facecolor="white")
-    for suffix in EXPORT_SIDE_FORMATS:
-        fig.savefig(output_path.with_suffix(suffix), bbox_inches="tight", pad_inches=0.18, facecolor="white")
+    base_path = output_path.with_suffix("")
+    for fmt in OUTPUT_FORMATS:
+        fig.savefig(base_path.with_suffix(f".{fmt}"), dpi=EXPORT_DPI, bbox_inches="tight", pad_inches=0.18, facecolor="white")
+    for suffix in LEGACY_EXPORT_SUFFIXES:
+        legacy_path = base_path.with_suffix(suffix)
+        if legacy_path.exists():
+            legacy_path.unlink()
 
 
 def save_alias_copy(source_path: Path, alias_path: Path) -> None:
@@ -224,11 +264,10 @@ def save_alias_copy(source_path: Path, alias_path: Path) -> None:
         return
     alias_path.parent.mkdir(parents=True, exist_ok=True)
     alias_path.write_bytes(source_path.read_bytes())
-    for suffix in EXPORT_SIDE_FORMATS:
-        source_variant = source_path.with_suffix(suffix)
+    for suffix in LEGACY_EXPORT_SUFFIXES:
         alias_variant = alias_path.with_suffix(suffix)
-        if source_variant.exists():
-            alias_variant.write_bytes(source_variant.read_bytes())
+        if alias_variant.exists():
+            alias_variant.unlink()
 
 
 def format_overlap_caption(min_overlap: int, max_overlap: int) -> str:
@@ -256,7 +295,7 @@ def compute_robust_limits(values: pd.Series, low_q: float = 0.01, high_q: float 
     return low - padding, high + padding, outside
 
 
-def annotate_outlier_note(ax: plt.Axes, n_outliers: int, x: float = 0.99, y: float = 0.95) -> None:
+def annotate_outlier_note(ax: plt.Axes, n_outliers: int, x: float = 0.02, y: float = 0.95) -> None:
     """Annotate that rare extreme values exist outside the main display range."""
 
     if n_outliers <= 0:
@@ -266,7 +305,7 @@ def annotate_outlier_note(ax: plt.Axes, n_outliers: int, x: float = 0.99, y: flo
         y,
         f"За пределами основного диапазона остаются\nредкие экстремумы: {n_outliers}",
         transform=ax.transAxes,
-        ha="right",
+        ha="left",
         va="top",
         fontsize=8.8,
         color="#49525C",
@@ -318,6 +357,81 @@ def interpret_correlation_strength(value: float | None, n_overlap: int) -> str:
     if abs_value >= 0.4:
         return "moderate"
     return "weak"
+
+
+def classify_direction_bucket(rate_a: float, rate_b: float, threshold: float = ZERO_NEAR_ZERO_RATE_THRESHOLD) -> str:
+    """Classify one overlapping interval pair by signed-direction context."""
+
+    if abs(rate_a) <= threshold or abs(rate_b) <= threshold:
+        return "zero_or_near_zero"
+    return "same_sign" if np.sign(rate_a) == np.sign(rate_b) else "opposite_sign"
+
+
+def build_direction_shares(rates_a: pd.Series, rates_b: pd.Series) -> tuple[float | None, float | None, float | None]:
+    """Summarize how often overlapping rate pairs move in the same, opposite, or near-zero direction."""
+
+    valid = pd.to_numeric(rates_a, errors="coerce").notna() & pd.to_numeric(rates_b, errors="coerce").notna()
+    if int(valid.sum()) == 0:
+        return None, None, None
+    buckets = [
+        classify_direction_bucket(float(rate_a), float(rate_b))
+        for rate_a, rate_b in zip(rates_a.loc[valid], rates_b.loc[valid])
+    ]
+    total = len(buckets)
+    same = buckets.count("same_sign") / total
+    opposite = buckets.count("opposite_sign") / total
+    zero = buckets.count("zero_or_near_zero") / total
+    return same, opposite, zero
+
+
+def build_correlation_short_note(
+    *,
+    n_overlap: int,
+    pearson_rate: float | None,
+    spearman_rate: float | None,
+    same_sign_share: float | None,
+    opposite_sign_share: float | None,
+    zero_or_near_zero_share: float | None,
+    duplicate_conflict_context_any: bool,
+    std_rate_a: float | None,
+    std_rate_b: float | None,
+) -> str | None:
+    """Build a compact diagnostic tag string for one profile pair."""
+
+    tags: list[str] = []
+    negative_by_coefficients = (
+        pearson_rate is not None
+        and spearman_rate is not None
+        and not pd.isna(pearson_rate)
+        and not pd.isna(spearman_rate)
+        and float(pearson_rate) <= -0.30
+        and float(spearman_rate) <= -0.30
+    )
+    negative_by_direction = (
+        opposite_sign_share is not None
+        and same_sign_share is not None
+        and float(opposite_sign_share) >= 0.40
+        and float(same_sign_share) < 0.40
+    )
+    suppress_negative_tag = same_sign_share is not None and float(same_sign_share) >= 0.60
+    if not suppress_negative_tag and (negative_by_coefficients or negative_by_direction):
+        tags.append("negative_signed_relation")
+    if classify_overlap_caution(n_overlap) != "adequate_overlap":
+        tags.append("low_overlap_read_with_caution")
+    if duplicate_conflict_context_any:
+        tags.append("conflict_context_read_with_caution")
+    if opposite_sign_share is not None and opposite_sign_share >= 0.6:
+        tags.append("mostly_opposite_direction")
+    elif same_sign_share is not None and same_sign_share >= 0.6:
+        tags.append("mostly_same_direction")
+    if zero_or_near_zero_share is not None and zero_or_near_zero_share >= 0.4:
+        tags.append("many_zero_or_near_zero_intervals")
+    if (
+        (std_rate_a is not None and not pd.isna(std_rate_a) and float(std_rate_a) <= ZERO_NEAR_ZERO_RATE_THRESHOLD)
+        or (std_rate_b is not None and not pd.isna(std_rate_b) and float(std_rate_b) <= ZERO_NEAR_ZERO_RATE_THRESHOLD)
+    ):
+        tags.append("low_variation_read_with_caution")
+    return "; ".join(dict.fromkeys(tags)) if tags else None
 
 
 def load_analysis_safe_subset() -> pd.DataFrame:
@@ -502,11 +616,14 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
                                 "retreat_rate_m_per_year_b": row["retreat_rate_m_per_year_b"],
                                 "retreat_abs_m_a": row["retreat_abs_m_a"],
                                 "retreat_abs_m_b": row["retreat_abs_m_b"],
+                                "has_conflicting_shoreline_duplicates_a": row.get("has_conflicting_shoreline_duplicates_a"),
+                                "has_conflicting_shoreline_duplicates_b": row.get("has_conflicting_shoreline_duplicates_b"),
                             }
                         )
 
                 n_overlap = int(len(merged))
                 note_bits: list[str] = []
+                note_bits.append("Сопоставление выполнено только внутри одного участка и только по полностью совпадающим interval `date_start/date_end` без импутации.")
                 if n_overlap == 0:
                     note_bits.append("Нет полностью сопоставимых интервалов наблюдений между профилями.")
                 elif n_overlap < 3:
@@ -535,9 +652,39 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
                 pearson_rate = corr_or_nan("retreat_rate_m_per_year_a", "retreat_rate_m_per_year_b", "pearson")
                 spearman_rate = corr_or_nan("retreat_rate_m_per_year_a", "retreat_rate_m_per_year_b", "spearman")
                 overlap_caution_flag = classify_overlap_caution(n_overlap)
+                rates_a = pd.to_numeric(merged["retreat_rate_m_per_year_a"], errors="coerce")
+                rates_b = pd.to_numeric(merged["retreat_rate_m_per_year_b"], errors="coerce")
+                mean_rate_a = None if merged.empty else float(rates_a.mean()) if pd.notna(rates_a.mean()) else None
+                mean_rate_b = None if merged.empty else float(rates_b.mean()) if pd.notna(rates_b.mean()) else None
+                std_rate_a = None if merged.empty else float(rates_a.std()) if pd.notna(rates_a.std()) else None
+                std_rate_b = None if merged.empty else float(rates_b.std()) if pd.notna(rates_b.std()) else None
+                same_sign_share, opposite_sign_share, zero_or_near_zero_share = build_direction_shares(rates_a, rates_b)
+                duplicate_conflict_context_any = bool(
+                    left["has_conflicting_shoreline_duplicates"].fillna(False).astype(bool).any()
+                    or right["has_conflicting_shoreline_duplicates"].fillna(False).astype(bool).any()
+                )
+                short_note = build_correlation_short_note(
+                    n_overlap=n_overlap,
+                    pearson_rate=pearson_rate,
+                    spearman_rate=spearman_rate,
+                    same_sign_share=same_sign_share,
+                    opposite_sign_share=opposite_sign_share,
+                    zero_or_near_zero_share=zero_or_near_zero_share,
+                    duplicate_conflict_context_any=duplicate_conflict_context_any,
+                    std_rate_a=std_rate_a,
+                    std_rate_b=std_rate_b,
+                )
 
                 if n_overlap >= 2 and all(value is None for value in [pearson_retreat, spearman_retreat, pearson_rate, spearman_rate]):
                     note_bits.append("Один из рядов почти константен или содержит недостаточно вариации для оценки корреляции.")
+                if any(value is not None and value < 0 for value in [pearson_rate, spearman_rate]):
+                    note_bits.append(
+                        "Отрицательная signed-корреляция здесь означает противоположное поведение `retreat_rate_m_per_year` в принятой профильной конвенции, а не готовую физическую категорию."
+                    )
+                if duplicate_conflict_context_any:
+                    note_bits.append("Для одной или обеих профильных серий есть конфликтующий duplicate-context; интерпретация требует дополнительной осторожности.")
+                if zero_or_near_zero_share is not None and zero_or_near_zero_share >= 0.4:
+                    note_bits.append("Заметная доля overlap-интервалов имеет нулевые или близкие к нулю signed-скорости.")
 
                 summary_rows.append(
                     {
@@ -556,6 +703,15 @@ def build_profile_correlation_tables(subset: pd.DataFrame) -> tuple[pd.DataFrame
                         "pearson_rate_strength": interpret_correlation_strength(pearson_rate, n_overlap),
                         "spearman_rate_strength": interpret_correlation_strength(spearman_rate, n_overlap),
                         "is_low_sample": n_overlap < 3,
+                        "mean_rate_a": mean_rate_a,
+                        "mean_rate_b": mean_rate_b,
+                        "std_rate_a": std_rate_a,
+                        "std_rate_b": std_rate_b,
+                        "same_sign_share": same_sign_share,
+                        "opposite_sign_share": opposite_sign_share,
+                        "zero_or_near_zero_share": zero_or_near_zero_share,
+                        "duplicate_conflict_context_any": duplicate_conflict_context_any,
+                        "short_note": short_note,
                         "note": " ".join(note_bits) if note_bits else None,
                     }
                 )
@@ -646,6 +802,105 @@ def build_profile_correlation_presentation(summary_df: pd.DataFrame, subset: pd.
             "has_duplicate_conflict_context",
         ]
     ].sort_values("site_name").reset_index(drop=True)
+
+
+def build_profile_correlation_diagnostics(summary_df: pd.DataFrame) -> pd.DataFrame:
+    """Build an explainability-first diagnostics table for task 2."""
+
+    if summary_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "site_id",
+                "site_name",
+                "profile_id_a",
+                "profile_id_b",
+                "n_overlap",
+                "pearson_rate",
+                "spearman_rate",
+                "overlap_caution_flag",
+                "mean_rate_a",
+                "mean_rate_b",
+                "std_rate_a",
+                "std_rate_b",
+                "same_sign_share",
+                "opposite_sign_share",
+                "zero_or_near_zero_share",
+                "duplicate_conflict_context_any",
+                "short_note",
+                "correlation_basis",
+                "interpretation_note",
+            ]
+        )
+
+    diagnostics = summary_df.copy()
+    diagnostics["correlation_basis"] = (
+        "within_site_only; exact_date_start_date_end_match_only; no_imputation; signed_retreat_rate_m_per_year; "
+        "pearson_linear; spearman_monotonic; interpret_with_n_overlap"
+    )
+    diagnostics["interpretation_note"] = (
+        "Negative coefficients indicate opposite signed behavior in the adopted profile convention; read with extra caution when overlap is small or duplicate-conflict context is present."
+    )
+    diagnostics = diagnostics.rename(
+        columns={
+            "n_overlap_intervals": "n_overlap",
+            "pearson_retreat_rate_m_per_year": "pearson_rate",
+            "spearman_retreat_rate_m_per_year": "spearman_rate",
+        }
+    )
+    return diagnostics[
+        [
+            "site_id",
+            "site_name",
+            "profile_id_a",
+            "profile_id_b",
+            "n_overlap",
+            "pearson_rate",
+            "spearman_rate",
+            "overlap_caution_flag",
+            "mean_rate_a",
+            "mean_rate_b",
+            "std_rate_a",
+            "std_rate_b",
+            "same_sign_share",
+            "opposite_sign_share",
+            "zero_or_near_zero_share",
+            "duplicate_conflict_context_any",
+            "short_note",
+            "correlation_basis",
+            "interpretation_note",
+        ]
+    ].sort_values(["site_name", "profile_id_a", "profile_id_b"]).reset_index(drop=True)
+
+
+def build_final_dataset_for_modeling(subset: pd.DataFrame, output_path: Path | None = None) -> Path:
+    """Write a compact modeling dataset without altering the wider technical layers."""
+
+    output_path = output_path or PROCESSED_DIR / "final_dataset_for_modeling.csv"
+    final_df = subset.copy()
+    drop_columns = [column for column in FINAL_MODELING_DROP_COLUMNS if column in final_df.columns]
+    if drop_columns:
+        final_df = final_df.drop(columns=drop_columns)
+
+    empty_columns = [column for column in final_df.columns if final_df[column].isna().all()]
+    if empty_columns:
+        final_df = final_df.drop(columns=empty_columns)
+
+    duplicate_columns_to_drop: list[str] = []
+    remaining_columns = list(final_df.columns)
+    for left_idx, left_column in enumerate(remaining_columns):
+        if left_column in duplicate_columns_to_drop:
+            continue
+        for right_column in remaining_columns[left_idx + 1 :]:
+            if right_column in duplicate_columns_to_drop:
+                continue
+            if final_df[left_column].equals(final_df[right_column]):
+                duplicate_columns_to_drop.append(right_column)
+    if duplicate_columns_to_drop:
+        final_df = final_df.drop(columns=duplicate_columns_to_drop)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    final_df.to_csv(output_path, index=False)
+    return output_path
 
 
 def plot_retreat_histogram(
@@ -1129,7 +1384,7 @@ def plot_profile_correlation_heatmaps(
         footer_ax.text(
             0.0,
             0.3,
-            f"Средняя качественная оценка согласованности: {strength_text}. Коэффициенты рассчитаны только по полностью сопоставимым интервалам.",
+            f"Средняя качественная оценка согласованности: {strength_text}. {DISPLAY_LABELS['notes']['correlation_reading']} {DISPLAY_LABELS['notes']['correlation_negative']}",
             ha="left",
             va="center",
             fontsize=9.0,
@@ -1181,7 +1436,7 @@ def plot_profile_correlation_heatmaps(
     title_ax.text(
         0.0,
         0.18,
-        "Справа указано число общих интервалов; пометка осторожности добавлена только там, где она действительно нужна.",
+        "Справа указано число общих интервалов; коэффициенты получены только по точным совпадениям `date_start/date_end` внутри участка без импутации.",
         ha="left",
         va="bottom",
         fontsize=9.15,
@@ -1191,7 +1446,8 @@ def plot_profile_correlation_heatmaps(
     footer_ax.text(
         0.0,
         0.3,
-        "Это основной рисунок задачи 2: он показывает, где профили внутри участка ведут себя более согласованно, а где интерпретация должна быть осторожной.",
+        "Это основной рисунок задачи 2: он показывает, где профили внутри участка ведут себя более согласованно, а где интерпретация должна быть осторожной. "
+        + DISPLAY_LABELS["notes"]["correlation_negative"],
         ha="left",
         va="center",
         fontsize=9.05,
@@ -1232,7 +1488,13 @@ def plot_profile_correlation_heatmaps(
                 rotation_override=30,
             )
         fig.suptitle(f"Приложение к задаче 2. Корреляции по участкам, стр. {page_idx}", y=0.99)
-        add_figure_footer(fig, "Справочная мозаика для приложения. Для обсуждения используйте overview и отдельные figures по участкам.", y=0.014, fontsize=8.95)
+        add_figure_footer(
+            fig,
+            "Справочная мозаика для приложения. Для обсуждения используйте overview и отдельные figures по участкам. "
+            + DISPLAY_LABELS["notes"]["correlation_negative"],
+            y=0.014,
+            fontsize=8.95,
+        )
         appendix_page_path = output_dir / f"02_profile_correlation_appendix_page_{page_idx}.png"
         export_figure(fig, appendix_page_path)
         plt.close(fig)
@@ -1250,9 +1512,11 @@ def write_first_stage_outputs(subset: pd.DataFrame) -> dict[str, Path]:
     """Write CSV and figure outputs for tasks 1-2."""
 
     safe_subset_path = PROCESSED_DIR / "analysis_safe_subset.csv"
+    final_dataset_path = PROCESSED_DIR / "final_dataset_for_modeling.csv"
     periods_summary_path = REPORTS_DIR / "tables" / "01_periods_summary.csv"
     corr_summary_path = REPORTS_DIR / "tables" / "02_profile_correlation_summary.csv"
     corr_pairs_path = REPORTS_DIR / "tables" / "02_profile_correlation_pairs.csv"
+    corr_diagnostics_path = REPORTS_DIR / "tables" / "02_profile_correlation_diagnostics.csv"
     corr_presentation_path = REPORTS_DIR / "tables" / "02_profile_correlation_presentation.csv"
     distributions_path = REPORTS_DIR / "figures" / "01_retreat_distributions.png"
     timelines_path = REPORTS_DIR / "figures" / "01_site_interval_timelines.png"
@@ -1263,12 +1527,15 @@ def write_first_stage_outputs(subset: pd.DataFrame) -> dict[str, Path]:
     distributions_path.parent.mkdir(parents=True, exist_ok=True)
 
     subset.to_csv(safe_subset_path, index=False)
+    build_final_dataset_for_modeling(subset, output_path=final_dataset_path)
     periods_summary = build_periods_summary(subset)
     corr_summary, corr_pairs = build_profile_correlation_tables(subset)
+    corr_diagnostics = build_profile_correlation_diagnostics(corr_summary)
     corr_presentation = build_profile_correlation_presentation(corr_summary, subset)
     periods_summary.to_csv(periods_summary_path, index=False)
     corr_summary.to_csv(corr_summary_path, index=False)
     corr_pairs.to_csv(corr_pairs_path, index=False)
+    corr_diagnostics.to_csv(corr_diagnostics_path, index=False)
     corr_presentation.to_csv(corr_presentation_path, index=False)
 
     figure_outputs: dict[str, Path] = {}
@@ -1278,9 +1545,11 @@ def write_first_stage_outputs(subset: pd.DataFrame) -> dict[str, Path]:
 
     outputs = {
         "analysis_safe_subset": safe_subset_path,
+        "final_dataset_for_modeling": final_dataset_path,
         "periods_summary": periods_summary_path,
         "profile_correlation_summary": corr_summary_path,
         "profile_correlation_pairs": corr_pairs_path,
+        "profile_correlation_diagnostics": corr_diagnostics_path,
         "profile_correlation_presentation": corr_presentation_path,
         "retreat_distributions_figure": distributions_path,
         "site_interval_timelines_figure": timelines_path,

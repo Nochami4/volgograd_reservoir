@@ -1,0 +1,44 @@
+{
+  "master_hash_before": "73fab2780add22b30f174985bf92339f6ada9e79475b580db5391d792283fd12",
+  "master_hash_after": "73fab2780add22b30f174985bf92339f6ada9e79475b580db5391d792283fd12",
+  "wind_stats": {
+    "rows_total": 575,
+    "rows_with_local_wind_context": 96,
+    "rows_with_local_wind_speed_summary": 56,
+    "rows_with_local_context_only": 40,
+    "rows_filled_from_noaa": 0,
+    "rows_without_any_wind_obs_after_enrichment": 479,
+    "master_missing_mean_wind_by_omission": 575,
+    "enriched_nonnull_mean_wind": 56,
+    "enriched_nonnull_coverage_wind": 575,
+    "rows_without_wind_mean_after_enrichment": 519
+  },
+  "water_stats": {
+    "rows_with_master_water_context": 452,
+    "rows_with_water_gap_retained": 123,
+    "water_values_filled_beyond_master": 0
+  },
+  "validation": {
+    "station_prefix": "343630 99999",
+    "station_line": "343630 99999 KAMYSIN                       RS            +50.067 +045.367 +0119.0 19320101 20250725",
+    "inventory_years": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "station_match_ok": true,
+    "exact_overlap_count": 6,
+    "exact_mae": 5.333333333333333,
+    "exact_median_abs_error": 1.0,
+    "exact_corr": -0.225924028528766,
+    "daily_overlap_count": 8,
+    "daily_mean_mae": 4.695982142857143,
+    "daily_max_mae": 4.875,
+    "usable_for_fill": false
+  },
+  "output_path": "data/processed/final_dataset_enriched_open_sources.csv",
+  "manifest_path": "data/processed/final_dataset_enriched_open_sources_manifest.md"
+}

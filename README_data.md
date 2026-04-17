@@ -16,7 +16,7 @@ Current dataset status: `draft`.
 ## Known Limitations
 
 - `base_points` are now rebuilt into transparent `history/current` layers, but some rows still require manual review because the legacy `.doc` loses table structure in string extraction.
-- Water-level columns remain ambiguous and therefore stay neutral as `level_col_*`.
+- Water levels are now resolved as annual mean/max lower-section context, but they remain year-only shared hydrological context rather than site-local fully dated forcing.
 - Wind coverage is incomplete for many shoreline intervals, so interval-level wind summaries should be treated as screening variables only.
 - Duplicate shoreline observation keys exist and are tracked explicitly in `data/interim/shoreline_duplicate_report.csv`.
 - Site project scope is not silently filtered; review it in `data/interim/site_scope_review.csv`.
@@ -112,27 +112,30 @@ Current dataset status: `draft`.
 
 ### `data/processed/water_levels_raw.csv`
 
-- Purpose: safe first-pass extraction of water-level blocks with ambiguous source semantics preserved.
-- Source: `data/raw/shoreline/Скорость отступания метров в год.xlsx`
+- Purpose: transparent annual water-level layer for interval joins, built from the dedicated reservoir-level workbook.
+- Source: `data/raw/Уровни ВДХР 1986-2018.xlsx`
 - Columns:
 - `water_obs_id`: stable observation identifier.
-- `site_id`: normalized site id.
-- `site_name`: site name normalized from the sheet title.
+- `site_id`, `site_name`: shoreline site key used for backward-compatible joins in `analysis_ready.csv`.
+- `water_section_id`, `water_section_name`: resolved hydrological context; the current series uses the lower reservoir section (`Нижний участок`, озерный участок).
 - `obs_date`: intentionally empty when the source block provides year-only values.
-- `year`: year extracted from the water-level block.
-- `level_col_1_m`, `level_col_2_m`: neutral numeric columns retained without assigning hidden semantics.
+- `year`: year extracted from the annual section-level workbook.
+- `water_level_mean_annual_m_abs`: annual mean water level for the lower section, meters absolute.
+- `water_level_max_annual_m_abs`: annual maximum water level for the lower section, meters absolute.
 - `source_file`: relative path to the source workbook.
 - `source_sheet`: source sheet name.
 - `source_row`: original row number in the workbook.
-- `is_missing`: row-level missingness flag for retained numeric level columns.
+- `is_missing`: row-level missingness flag for the resolved annual mean/max pair.
 - `missing_reason`: explicit missingness reason when set.
-- `qc_flag`: ambiguity flag when multiple numeric level columns are retained.
-- `qc_note`: explanation that neutral column names are used because semantics remain unresolved.
-- `preferred_level_col`: technically preferred neutral column by completeness only; this is not a semantic interpretation of the variable.
+- `qc_flag`: year-only and shared-section-context flags, plus missing-value flags when present.
+- `qc_note`: explanation that the series is annual lower-section context repeated across sites for join compatibility.
 - Notes:
-- This is currently a year-only hydrological layer.
+- The source workbook contains annual mean and annual maximum levels by reservoir section.
+- For the current shoreline analysis, the relevant section is the lower section; this is the same mean-level basis that was used in the legacy Excel plots for `Скорость отступания метров в год`.
+- Full observation dates are still not available; the layer remains year-only.
+- The same lower-section annual series is repeated across shoreline sites only to preserve pipeline-compatible joins. It should be treated as shared hydrological context, not as a site-local water record.
 - The extraction profile is documented in `data/interim/water_levels_profile.json`.
-- A manual interpretation manifest is maintained in `data/interim/water_levels_manual_dictionary.md`.
+- The resolved field dictionary is documented in `data/interim/water_levels_manual_dictionary.md`.
 
 ### `data/processed/base_points_history.csv`
 
@@ -201,22 +204,66 @@ Current dataset status: `draft`.
 - Site metadata columns from `sites.csv`
 - Profile metadata columns from `profiles.csv`
 - `n_wind_obs`, `mean_wind_speed_ms`, `max_wind_speed_ms`, `coverage_wind`
-- `n_water_obs`, `mean_level`, `max_level`, `min_level`, `range_level`, `coverage_water`
+- `n_water_obs`, `coverage_water`
+- Resolved water aggregates:
+- `mean_water_level_mean_annual_m_abs`, `max_water_level_mean_annual_m_abs`, `min_water_level_mean_annual_m_abs`, `range_water_level_mean_annual_m_abs`
+- `mean_water_level_max_annual_m_abs`, `max_water_level_max_annual_m_abs`, `min_water_level_max_annual_m_abs`, `range_water_level_max_annual_m_abs`
+- `water_context_scope`, `water_time_resolution`
+- Backward-compatible aliases:
+- `mean_level`, `max_level`, `min_level`, `range_level`
+- These aliases now point to the interval aggregation of `water_level_mean_annual_m_abs`, because the legacy shoreline Excel plots were based on annual mean lower-section water level.
 - `scope_status`: manual review status from `data/interim/site_scope_review.csv`.
-- `qc_flag_analysis`: interval-level flags such as `LOW_COVERAGE_WIND`, `LOW_COVERAGE_WATER`, `AMBIGUOUS_WATER_VARIABLE`, `SITE_SCOPE_NEEDS_REVIEW`.
-- `qc_note_analysis`: readable explanation of interval-level coverage and ambiguity issues.
+- `qc_flag_analysis`: interval-level flags such as `LOW_COVERAGE_WIND`, `LOW_COVERAGE_WATER`, `YEAR_ONLY_WATER_SOURCE`, `SITE_SCOPE_NEEDS_REVIEW`.
+- `qc_note_analysis`: readable explanation of interval-level coverage and remaining timing/interpretation limits.
+
+### `data/processed/analysis_safe_subset.csv`
+
+- Purpose: scoped interval layer for the current analytical stage, limited to confirmed project sites and enriched with duplicate-context QC.
+- Source: `data/processed/analysis_ready.csv` plus `data/interim/shoreline_duplicate_report.csv`
+- Notes:
+- This is the recommended base layer for current descriptive analysis and for building a cleaner modeling export.
+- `qc_flag_analysis_safe` and `qc_note_analysis_safe` are the main consolidated QC/context fields at this stage.
+
+### `data/processed/final_dataset_for_modeling.csv`
+
+- Purpose: compact final export for analysis and model preparation, built reproducibly from `data/processed/analysis_safe_subset.csv`.
+- Role: this is the master dataset and should remain the untouched baseline export, even where honest gaps remain.
+- Design:
+- Fully empty columns are removed.
+- Exact duplicate alias columns are removed.
+- Wide technical/provenance columns that remain available in broader processed layers are excluded here.
+- Kept groups:
+- Interval identifiers and dates
+- Signed and absolute retreat metrics
+- Core shoreline/site metadata
+- Resolved water-context aggregates and their timing/context flags
+- Duplicate-context indicators and consolidated QC fields
+- Use this file when you need the cleanest project-ready tabular export without losing the main analytical caveats.
+
+### `data/processed/final_dataset_enriched_open_sources.csv`
+
+- Purpose: separate companion export that keeps every master row and column, then adds transparent enrichment columns where open-source or already curated same-project context can be attached without inventing values.
+- Relationship to master:
+- `final_dataset_for_modeling.csv` stays the untouched master baseline.
+- `final_dataset_enriched_open_sources.csv` does not replace the master file; it supplements it with explicit provenance-aware enrichment.
+- Current scope:
+- Wind is added as a separate enrichment block with per-row source, method, confidence, and status fields.
+- Water values from master are retained as-is; no silent replacement of the existing year-only lower-section context is performed.
+- Remaining gaps stay missing when no honest compatible source is available.
+- Companion manifest: `data/processed/final_dataset_enriched_open_sources_manifest.md`
 
 ## What Is Safe To Analyze Now
 
 - Site-level metadata joins from `sites.csv` and `profiles.csv`.
 - Transparent shoreline interval construction from `shoreline_observations.csv` to `interval_metrics.csv`.
 - Screening summaries of wind and water coverage at the interval level.
+- Descriptive use of annual lower-section water context where it is important to distinguish annual mean and annual maximum level explicitly.
 - Absolute shoreline-change magnitude using `retreat_abs_m` and `retreat_rate_abs_m_per_year`.
 - Descriptive plots that explicitly respect `qc_flag`, `qc_note`, and coverage columns.
 
 ## What Is Not Yet Safe To Interpret
 
-- Any physics-based or causal interpretation that depends strongly on the meaning of `level_col_*`.
+- Strong local or causal interpretation of water effects from the current water layer, because it is still a year-only lower-section context series rather than a fully dated site-local forcing record.
 - Fine-grained georeferencing that assumes `base_points_current.csv` is complete and fully reviewed.
 - Strong conclusions from interval-level wind aggregates where `LOW_COVERAGE_WIND` is present.
 - Interpretation of `retreat_m` sign as “erosion” versus “advance” without profile-specific field-convention checking.
@@ -234,11 +281,11 @@ Current dataset status: `draft`.
 - The current interval linkage often yields `LOW_COVERAGE_WIND` because many shoreline intervals are much longer than the locally available meteorological coverage.
 - Extending the wind series or adding another transparent local source is required before stronger wind-retreat interpretation.
 
-## Water Semantics Still Ambiguous
+## Water Semantics And Remaining Limits
 
-- `level_col_1_m` and `level_col_2_m` remain neutral placeholders.
-- `preferred_level_col` is a completeness heuristic only.
-- Do not relabel these columns semantically until the source workbook is decoded manually.
+- Water semantics are now decoded explicitly as annual mean and annual maximum levels for the lower reservoir section in meters absolute.
+- Full observation dates are still unavailable, so the water layer remains year-only.
+- The same lower-section series is reused across shoreline sites as shared hydrological context for joins; it should not be over-interpreted as a site-local causal measurement.
 
 ## Base Points Manual Review
 
@@ -269,7 +316,7 @@ Current dataset status: `draft`.
 
 ### `data/interim/water_levels_manual_dictionary.md`
 
-- Purpose: manual decoding checklist for ambiguous water-level columns.
+- Purpose: compact field dictionary for the resolved lower-section annual water layer and its join logic.
 
 ### `data/interim/wind_coverage_by_interval.csv`
 

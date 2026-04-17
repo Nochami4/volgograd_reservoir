@@ -12,6 +12,7 @@ from src.parsers.common import INTERIM_DIR, MAX_REASONABLE_WIND_YEAR, MIN_REASON
 
 KEY_COLUMNS = {
     "analysis_ready.csv": ["interval_id"],
+    "final_dataset_for_modeling.csv": ["interval_id"],
     "base_points.csv": ["base_point_id"],
     "interval_metrics.csv": ["interval_id"],
     "profiles.csv": ["profile_id"],
@@ -96,13 +97,21 @@ def qc_for_file(path: Path) -> dict[str, object]:
             blockers.append("Some base points still have unresolved site_id and require manual review.")
 
     if path.name == "water_levels_raw.csv" and not df.empty:
-        ambiguous_share = float(df["qc_flag"].fillna("").str.contains("AMBIGUOUS_LEVEL_COLUMNS", regex=False).mean())
+        missing_mean_share = float(df["water_level_mean_annual_m_abs"].isna().mean()) if "water_level_mean_annual_m_abs" in df.columns else 1.0
+        missing_max_share = float(df["water_level_max_annual_m_abs"].isna().mean()) if "water_level_max_annual_m_abs" in df.columns else 1.0
         year_only_share = float(df["obs_date"].isna().mean()) if "obs_date" in df.columns else 1.0
         extra_checks.append(
             {
-                "name": "ambiguous_level_columns_share",
+                "name": "water_mean_level_missing_share",
                 "count": None,
-                "details": f"Share of rows with ambiguous neutral level columns: {ambiguous_share:.3f}.",
+                "details": f"Share of rows missing resolved annual mean lower-section water level: {missing_mean_share:.3f}.",
+            }
+        )
+        extra_checks.append(
+            {
+                "name": "water_max_level_missing_share",
+                "count": None,
+                "details": f"Share of rows missing resolved annual max lower-section water level: {missing_max_share:.3f}.",
             }
         )
         extra_checks.append(
@@ -112,8 +121,8 @@ def qc_for_file(path: Path) -> dict[str, object]:
                 "details": f"Share of water rows without full obs_date: {year_only_share:.3f}.",
             }
         )
-        if ambiguous_share > 0:
-            blockers.append("Water level columns remain semantically ambiguous; only neutral technical aggregation is currently safe.")
+        if missing_mean_share > 0 or missing_max_share > 0:
+            blockers.append("Resolved lower-section water levels still contain missing annual values.")
 
     if path.name == "analysis_ready.csv" and not df.empty:
         low_wind_share = float(df["qc_flag_analysis"].fillna("").str.contains("LOW_COVERAGE_WIND", regex=False).mean())
@@ -150,6 +159,18 @@ def qc_for_file(path: Path) -> dict[str, object]:
         )
         if low_wind_share > 0.5:
             blockers.append("Wind coverage is below the 0.8 threshold for many shoreline intervals.")
+
+    if path.name == "final_dataset_for_modeling.csv" and not df.empty:
+        all_empty_columns = [column for column in df.columns if df[column].isna().all()]
+        extra_checks.append(
+            {
+                "name": "final_dataset_all_empty_columns",
+                "count": len(all_empty_columns),
+                "details": f"All-empty columns: {all_empty_columns if all_empty_columns else 'none'}.",
+            }
+        )
+        if all_empty_columns:
+            blockers.append("final_dataset_for_modeling.csv still contains all-empty columns.")
 
     if path.name == "shoreline_observations.csv" and not df.empty:
         duplicate_report = load_duplicate_report()
@@ -228,11 +249,15 @@ def build_markdown_report(results: list[dict[str, object]]) -> str:
         lines.append("- `base_points.csv`: empty.")
 
     if not water_df.empty:
-        ambiguous_share = float(water_df["qc_flag"].fillna("").str.contains("AMBIGUOUS_LEVEL_COLUMNS", regex=False).mean())
+        missing_mean_share = float(water_df["water_level_mean_annual_m_abs"].isna().mean()) if "water_level_mean_annual_m_abs" in water_df.columns else 1.0
+        missing_max_share = float(water_df["water_level_max_annual_m_abs"].isna().mean()) if "water_level_max_annual_m_abs" in water_df.columns else 1.0
         no_date_share = float(water_df["obs_date"].isna().mean()) if "obs_date" in water_df.columns else 1.0
         available_sites = set(water_df["site_id"].dropna().astype(str))
         missing_sites = sorted(set(sites_df["site_id"].dropna().astype(str)) - available_sites) if not sites_df.empty else []
-        lines.append(f"- `water_levels_raw.csv`: ambiguous neutral columns share = {ambiguous_share:.3f}; rows without full date = {no_date_share:.3f}.")
+        lines.append(
+            f"- `water_levels_raw.csv`: missing share for resolved lower-section mean/max columns = {missing_mean_share:.3f}/{missing_max_share:.3f}; rows without full date = {no_date_share:.3f}."
+        )
+        lines.append("- Water levels are now decoded as annual mean/max values for the lower reservoir section, but they remain year-only section-level context.")
         lines.append(f"- Sites without any extracted water rows: {missing_sites if missing_sites else 'none'}.")
 
     if not duplicate_report.empty:

@@ -1,105 +1,25 @@
-# Water Levels Manual Dictionary
+# Water Levels Dictionary
 
-This file documents only what was extracted mechanically from the source workbook.
-No semantic interpretation of `level_col_1_m` or `level_col_2_m` is made here.
+This file documents the mechanically extracted water layer used in the current pipeline.
 
-## Extracted Sheets
+## Resolved Fields
 
-### `Нижний Ураков`
+- `water_level_mean_annual_m_abs`: annual mean water level for the lower reservoir section, meters absolute.
+- `water_level_max_annual_m_abs`: annual maximum water level for the lower reservoir section, meters absolute.
+- `obs_date`: intentionally empty because the source workbook provides annual values by year only.
+- `water_section_id`: `lower_section`.
+- `water_section_name`: `Нижний участок (озерный)`.
 
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 52
+## Join Logic
+
+- The lower-section annual series is attached to each shoreline site as shared hydrological context for interval-level joins.
+- This preserves pipeline compatibility without inventing site-local observation dates or local water series.
+
+## Extraction Profile
+
+- Source workbook: `data/raw/Уровни ВДХР 1986-2018.xlsx`
+- Source sheet: `Данные по участкам`
+- Source rows scanned: 88
 - Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 48
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Нижний Балыклей`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 54
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 51
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Бережновка`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 51
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 49
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Бурты`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 55
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 52
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Пролейский`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 96
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 58
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Молчановка`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 54
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 51
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Пичуга-Южный`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 40
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 37
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Ураков Бугор`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 48
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 45
-- Manual interpretation still required for the physical meaning of the neutral level columns.
-
-### `Новоникольское`
-
-- Extracted neutral columns: `year`, `level_col_1_m`, `level_col_2_m`
-- Preferred column by completeness only: `level_col_1_m`
-- Rows scanned: 47
-- Recognized years: 33
-- Rows with one numeric level column: 0
-- Rows with two numeric level columns: 33
-- Problem rows: 45
-- Manual interpretation still required for the physical meaning of the neutral level columns.
+- Year range: 1986..2018
+- Site rows written per year: 10

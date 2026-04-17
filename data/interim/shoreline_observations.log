@@ -25,3 +25,9 @@
 2026-04-11 21:13:22 | INFO | build_shoreline_observations | Built data/processed/shoreline_observations.csv with 716 rows
 2026-04-11 21:13:22 | INFO | build_shoreline_observations | Wrote shoreline duplicate report to data/interim/shoreline_duplicate_report.csv
 2026-04-11 21:13:22 | INFO | build_shoreline_observations | Wrote shoreline parsing log to data/interim/shoreline_observations_log.json
+2026-04-14 21:26:07 | INFO | build_shoreline_observations | Built data/processed/shoreline_observations.csv with 716 rows
+2026-04-14 21:26:07 | INFO | build_shoreline_observations | Wrote shoreline duplicate report to data/interim/shoreline_duplicate_report.csv
+2026-04-14 21:26:07 | INFO | build_shoreline_observations | Wrote shoreline parsing log to data/interim/shoreline_observations_log.json
+2026-04-17 09:46:51 | INFO | build_shoreline_observations | Built data/processed/shoreline_observations.csv with 716 rows
+2026-04-17 09:46:51 | INFO | build_shoreline_observations | Wrote shoreline duplicate report to data/interim/shoreline_duplicate_report.csv
+2026-04-17 09:46:51 | INFO | build_shoreline_observations | Wrote shoreline parsing log to data/interim/shoreline_observations_log.json

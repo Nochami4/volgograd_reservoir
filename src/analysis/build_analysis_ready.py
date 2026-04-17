@@ -23,22 +23,25 @@ PROJECT_SCOPE_DEFAULTS = {
     "berezhnovka": (True, "reviewed", "Listed on the project map and in the source-document scope."),
     "suvodskaya": (False, "reviewed", "Present in the metadata workbook but not listed among the nine scoped map/source-document sites."),
 }
+WATER_RESOLVED_COLUMNS = [
+    "water_level_mean_annual_m_abs",
+    "water_level_max_annual_m_abs",
+]
 
 
 def prepare_water_levels(water_df: pd.DataFrame) -> pd.DataFrame:
-    """Select a first available numeric level column without guessing source semantics."""
+    """Validate resolved annual water columns without reintroducing ambiguity."""
 
     df = water_df.copy()
-    level_columns = [column for column in df.columns if column.startswith("level_col_") and column.endswith("_m")]
-    if not level_columns:
-        df["analysis_level_m"] = pd.NA
-        df["water_variable_is_ambiguous"] = False
-        return df
-
-    sorted_level_columns = sorted(level_columns)
-    df[sorted_level_columns] = df[sorted_level_columns].apply(pd.to_numeric, errors="coerce")
-    df["analysis_level_m"] = df[sorted_level_columns].bfill(axis=1).iloc[:, 0]
-    df["water_variable_is_ambiguous"] = True
+    for column in WATER_RESOLVED_COLUMNS:
+        if column not in df.columns:
+            df[column] = pd.NA
+        df[column] = pd.to_numeric(df[column], errors="coerce")
+    df["water_time_resolution"] = df["obs_date"].isna().map(lambda is_year_only: "year_only" if is_year_only else "full_date")
+    if "water_section_name" not in df.columns:
+        df["water_section_name"] = pd.NA
+    df["water_context_scope"] = df["water_section_name"].fillna("Shared annual reservoir-section context")
+    df["water_variable_is_ambiguous"] = False
     return df
 
 
@@ -69,14 +72,34 @@ def aggregate_water_for_interval(interval_row: pd.Series, water_df: pd.DataFrame
     ].copy()
     years_spanned = max(interval_row["date_end_dt"].year - interval_row["date_start_dt"].year + 1, 1)
     coverage = subset["year"].nunique() / years_spanned if not subset.empty else 0.0
+    mean_annual = subset["water_level_mean_annual_m_abs"]
+    max_annual = subset["water_level_max_annual_m_abs"]
+    water_qc_note = None
+    if not subset.empty:
+        section_names = sorted({str(value) for value in subset["water_section_name"].dropna().astype(str) if str(value)})
+        section_label = section_names[0] if section_names else "the resolved lower reservoir section"
+        water_qc_note = (
+            f"Water metrics aggregate annual mean/max levels for {section_label} in meters absolute over inclusive calendar years. "
+            "The source provides years only, so this is section-level hydrological context rather than a fully dated local causal series."
+        )
     return {
         "n_water_obs": int(len(subset)),
-        "mean_level": subset["analysis_level_m"].mean() if not subset.empty else None,
-        "max_level": subset["analysis_level_m"].max() if not subset.empty else None,
-        "min_level": subset["analysis_level_m"].min() if not subset.empty else None,
-        "range_level": (subset["analysis_level_m"].max() - subset["analysis_level_m"].min()) if not subset.empty else None,
+        "mean_water_level_mean_annual_m_abs": mean_annual.mean() if not subset.empty else None,
+        "max_water_level_mean_annual_m_abs": mean_annual.max() if not subset.empty else None,
+        "min_water_level_mean_annual_m_abs": mean_annual.min() if not subset.empty else None,
+        "range_water_level_mean_annual_m_abs": (mean_annual.max() - mean_annual.min()) if not subset.empty else None,
+        "mean_water_level_max_annual_m_abs": max_annual.mean() if not subset.empty else None,
+        "max_water_level_max_annual_m_abs": max_annual.max() if not subset.empty else None,
+        "min_water_level_max_annual_m_abs": max_annual.min() if not subset.empty else None,
+        "range_water_level_max_annual_m_abs": (max_annual.max() - max_annual.min()) if not subset.empty else None,
+        "mean_level": mean_annual.mean() if not subset.empty else None,
+        "max_level": mean_annual.max() if not subset.empty else None,
+        "min_level": mean_annual.min() if not subset.empty else None,
+        "range_level": (mean_annual.max() - mean_annual.min()) if not subset.empty else None,
         "coverage_water": coverage,
-        "water_qc_note": "Water aggregation uses neutral level_col_* fields without semantic relabeling; interpret only as a draft technical proxy." if not subset.empty else None,
+        "water_time_resolution": "year_only" if not subset.empty else None,
+        "water_context_scope": subset["water_context_scope"].dropna().iloc[0] if not subset.empty and not subset["water_context_scope"].dropna().empty else None,
+        "water_qc_note": water_qc_note,
         "water_variable_is_ambiguous": bool(subset["water_variable_is_ambiguous"].any()) if not subset.empty else False,
     }
 
@@ -139,7 +162,6 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
     wind_df["obs_date"] = pd.to_datetime(wind_df["obs_date"], errors="coerce")
     wind_df["wind_speed_ms"] = pd.to_numeric(wind_df["wind_speed_ms"], errors="coerce")
     water_df["year"] = pd.to_numeric(water_df["year"], errors="coerce")
-    water_df["analysis_level_m"] = pd.to_numeric(water_df["analysis_level_m"], errors="coerce")
 
     merged = merge_with_checks(
         interval_df,
@@ -200,9 +222,9 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
         if pd.notna(row["coverage_water"]) and row["coverage_water"] < LOW_COVERAGE_THRESHOLD:
             row_flags.append("LOW_COVERAGE_WATER")
             row_notes.append(f"Water coverage is {row['coverage_water']:.2f}, below the {LOW_COVERAGE_THRESHOLD:.1f} threshold.")
-        if bool(row.get("water_variable_is_ambiguous")):
-            row_flags.append("AMBIGUOUS_WATER_VARIABLE")
-            row_notes.append("Water metrics use neutral `level_col_*` fields whose physical meaning is still unresolved.")
+        if pd.notna(row.get("n_water_obs")) and float(row.get("n_water_obs") or 0) > 0 and str(row.get("water_time_resolution") or "") == "year_only":
+            row_flags.append("YEAR_ONLY_WATER_SOURCE")
+            row_notes.append("Water values are available only as annual year-level observations without full dates.")
         if str(row.get("scope_status") or "") == "needs_review":
             row_flags.append("SITE_SCOPE_NEEDS_REVIEW")
             row_notes.append("This site has not yet been explicitly confirmed in `data/interim/site_scope_review.csv`.")

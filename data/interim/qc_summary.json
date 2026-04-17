@@ -2,7 +2,7 @@
   {
     "file": "data/processed/analysis_ready.csv",
     "rows": 587,
-    "columns": 50,
+    "columns": 60,
     "key_columns": [
       "interval_id"
     ],
@@ -51,11 +51,21 @@
       "max_wind_speed_ms": 0.8960817717206133,
       "coverage_wind": 0.0,
       "n_water_obs": 0.0,
-      "mean_level": 0.22998296422487224,
-      "max_level": 0.22998296422487224,
-      "min_level": 0.22998296422487224,
-      "range_level": 0.22998296422487224,
+      "mean_water_level_mean_annual_m_abs": 0.20954003407155025,
+      "max_water_level_mean_annual_m_abs": 0.20954003407155025,
+      "min_water_level_mean_annual_m_abs": 0.20954003407155025,
+      "range_water_level_mean_annual_m_abs": 0.20954003407155025,
+      "mean_water_level_max_annual_m_abs": 0.20954003407155025,
+      "max_water_level_max_annual_m_abs": 0.20954003407155025,
+      "min_water_level_max_annual_m_abs": 0.20954003407155025,
+      "range_water_level_max_annual_m_abs": 0.20954003407155025,
+      "mean_level": 0.20954003407155025,
+      "max_level": 0.20954003407155025,
+      "min_level": 0.20954003407155025,
+      "range_level": 0.20954003407155025,
       "coverage_water": 0.0,
+      "water_time_resolution": 0.20954003407155025,
+      "water_context_scope": 0.20954003407155025,
       "water_variable_is_ambiguous": 0.0,
       "qc_flag_analysis": 0.0,
       "qc_note_analysis": 0.0
@@ -69,7 +79,7 @@
       {
         "name": "analysis_low_coverage_water_share",
         "count": null,
-        "details": "Share of intervals flagged LOW_COVERAGE_WATER: 0.300."
+        "details": "Share of intervals flagged LOW_COVERAGE_WATER: 0.283."
       },
       {
         "name": "analysis_intervals_with_any_wind",
@@ -85,6 +95,71 @@
     "critical_blockers": [
       "Wind coverage is below the 0.8 threshold for many shoreline intervals."
     ]
+  },
+  {
+    "file": "data/processed/analysis_safe_subset.csv",
+    "rows": 575,
+    "columns": 53,
+    "key_columns": [],
+    "duplicate_rows": 0,
+    "duplicate_keys": null,
+    "missing_share": {
+      "interval_id": 0.0,
+      "site_id": 0.0,
+      "site_name": 0.0,
+      "profile_id": 0.0,
+      "profile_num": 0.0,
+      "profile_name": 0.0,
+      "date_start": 0.0,
+      "date_end": 0.0,
+      "days_between": 0.0,
+      "years_between": 0.0,
+      "retreat_m": 0.0,
+      "retreat_rate_m_per_year": 0.0,
+      "retreat_abs_m": 0.0,
+      "retreat_rate_abs_m_per_year": 0.0,
+      "n_raw_points_used": 0.0,
+      "calc_method": 0.0,
+      "shore_type": 0.0,
+      "shore_orientation_text": 0.0,
+      "shore_orientation_deg": 0.0,
+      "exposure_sectors_text": 0.0,
+      "lithology_text": 0.0,
+      "lithology_class": 0.0,
+      "notes": 1.0,
+      "start_date": 0.0,
+      "end_date": 0.0,
+      "n_observations": 0.0,
+      "n_water_obs": 0.0,
+      "coverage_water": 0.0,
+      "mean_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "max_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "min_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "range_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "mean_water_level_max_annual_m_abs": 0.21391304347826087,
+      "max_water_level_max_annual_m_abs": 0.21391304347826087,
+      "min_water_level_max_annual_m_abs": 0.21391304347826087,
+      "range_water_level_max_annual_m_abs": 0.21391304347826087,
+      "water_context_scope": 0.21391304347826087,
+      "water_time_resolution": 0.21391304347826087,
+      "in_project_scope": 0.0,
+      "scope_status": 0.0,
+      "scope_note": 0.0,
+      "history_start_year": 0.0,
+      "history_start_group": 0.0,
+      "has_conflicting_shoreline_duplicates": 0.0,
+      "conflicting_duplicate_group_count": 0.0,
+      "duplicate_conflict_obs_dates": 0.8956521739130435,
+      "duplicate_conflict_note": 0.8956521739130435,
+      "qc_flag": 0.8069565217391305,
+      "qc_note": 1.0,
+      "qc_flag_analysis": 0.0,
+      "qc_note_analysis": 0.0,
+      "qc_flag_analysis_safe": 0.0,
+      "qc_note_analysis_safe": 0.0
+    },
+    "extra_checks": [],
+    "critical_blockers": []
   },
   {
     "file": "data/processed/base_points.csv",
@@ -199,6 +274,64 @@
       "source_row_ref": 0.0
     },
     "extra_checks": [],
+    "critical_blockers": []
+  },
+  {
+    "file": "data/processed/final_dataset_for_modeling.csv",
+    "rows": 575,
+    "columns": 38,
+    "key_columns": [
+      "interval_id"
+    ],
+    "duplicate_rows": 0,
+    "duplicate_keys": 0,
+    "missing_share": {
+      "interval_id": 0.0,
+      "site_id": 0.0,
+      "site_name": 0.0,
+      "profile_id": 0.0,
+      "profile_num": 0.0,
+      "profile_name": 0.0,
+      "date_start": 0.0,
+      "date_end": 0.0,
+      "days_between": 0.0,
+      "years_between": 0.0,
+      "retreat_m": 0.0,
+      "retreat_rate_m_per_year": 0.0,
+      "retreat_abs_m": 0.0,
+      "retreat_rate_abs_m_per_year": 0.0,
+      "shore_type": 0.0,
+      "shore_orientation_text": 0.0,
+      "shore_orientation_deg": 0.0,
+      "exposure_sectors_text": 0.0,
+      "lithology_text": 0.0,
+      "lithology_class": 0.0,
+      "n_water_obs": 0.0,
+      "coverage_water": 0.0,
+      "mean_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "max_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "min_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "range_water_level_mean_annual_m_abs": 0.21391304347826087,
+      "mean_water_level_max_annual_m_abs": 0.21391304347826087,
+      "max_water_level_max_annual_m_abs": 0.21391304347826087,
+      "min_water_level_max_annual_m_abs": 0.21391304347826087,
+      "range_water_level_max_annual_m_abs": 0.21391304347826087,
+      "water_context_scope": 0.21391304347826087,
+      "water_time_resolution": 0.21391304347826087,
+      "history_start_year": 0.0,
+      "history_start_group": 0.0,
+      "has_conflicting_shoreline_duplicates": 0.0,
+      "conflicting_duplicate_group_count": 0.0,
+      "qc_flag_analysis_safe": 0.0,
+      "qc_note_analysis_safe": 0.0
+    },
+    "extra_checks": [
+      {
+        "name": "final_dataset_all_empty_columns",
+        "count": 0,
+        "details": "All-empty columns: none."
+      }
+    ],
     "critical_blockers": []
   },
   {
@@ -323,8 +456,8 @@
   },
   {
     "file": "data/processed/water_levels_raw.csv",
-    "rows": 297,
-    "columns": 15,
+    "rows": 330,
+    "columns": 16,
     "key_columns": [
       "water_obs_id"
     ],
@@ -334,24 +467,30 @@
       "water_obs_id": 0.0,
       "site_id": 0.0,
       "site_name": 0.0,
+      "water_section_id": 0.0,
+      "water_section_name": 0.0,
       "obs_date": 1.0,
       "year": 0.0,
-      "level_col_1_m": 0.0,
-      "level_col_2_m": 0.0,
+      "water_level_mean_annual_m_abs": 0.0,
+      "water_level_max_annual_m_abs": 0.0,
       "source_file": 0.0,
       "source_sheet": 0.0,
       "source_row": 0.0,
       "is_missing": 0.0,
       "missing_reason": 1.0,
       "qc_flag": 0.0,
-      "qc_note": 0.0,
-      "preferred_level_col": 0.0
+      "qc_note": 0.0
     },
     "extra_checks": [
       {
-        "name": "ambiguous_level_columns_share",
+        "name": "water_mean_level_missing_share",
         "count": null,
-        "details": "Share of rows with ambiguous neutral level columns: 1.000."
+        "details": "Share of rows missing resolved annual mean lower-section water level: 0.000."
+      },
+      {
+        "name": "water_max_level_missing_share",
+        "count": null,
+        "details": "Share of rows missing resolved annual max lower-section water level: 0.000."
       },
       {
         "name": "water_rows_without_full_date_share",
@@ -359,9 +498,7 @@
         "details": "Share of water rows without full obs_date: 1.000."
       }
     ],
-    "critical_blockers": [
-      "Water level columns remain semantically ambiguous; only neutral technical aggregation is currently safe."
-    ]
+    "critical_blockers": []
   },
   {
     "file": "data/processed/wind_obs_hourly.csv",
