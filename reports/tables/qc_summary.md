@@ -28,6 +28,7 @@
 | `data/processed/base_points.csv` | 16 | 21 | 0 | 0 | base_point_id |
 | `data/processed/base_points_current.csv` | 16 | 20 | 0 | n/a | n/a |
 | `data/processed/base_points_history.csv` | 21 | 20 | 0 | n/a | n/a |
+| `data/processed/final_dataset_enriched_open_sources.csv` | 575 | 54 | 0 | n/a | n/a |
 | `data/processed/final_dataset_for_modeling.csv` | 575 | 38 | 0 | 0 | interval_id |
 | `data/processed/interval_metrics.csv` | 587 | 17 | 0 | 0 | interval_id |
 | `data/processed/profiles.csv` | 33 | 9 | 0 | 0 | profile_id |
@@ -270,6 +271,65 @@
 | `source_row_ref` | 0.000 |
 | `x_m` | 0.000 |
 | `y_m` | 0.000 |
+
+### `data/processed/final_dataset_enriched_open_sources.csv`
+
+| Column | Missing share |
+| --- | ---: |
+| `conflicting_duplicate_group_count` | 0.000 |
+| `coverage_water` | 0.000 |
+| `coverage_wind` | 0.000 |
+| `date_end` | 0.000 |
+| `date_start` | 0.000 |
+| `days_between` | 0.000 |
+| `exposure_sectors_text` | 0.000 |
+| `has_conflicting_shoreline_duplicates` | 0.000 |
+| `history_start_group` | 0.000 |
+| `history_start_year` | 0.000 |
+| `interval_id` | 0.000 |
+| `lithology_class` | 0.000 |
+| `lithology_text` | 0.000 |
+| `max_water_level_max_annual_m_abs` | 0.214 |
+| `max_water_level_mean_annual_m_abs` | 0.214 |
+| `max_wind_speed_ms` | 0.903 |
+| `mean_water_level_max_annual_m_abs` | 0.214 |
+| `mean_water_level_mean_annual_m_abs` | 0.214 |
+| `mean_wind_speed_ms` | 0.903 |
+| `min_water_level_max_annual_m_abs` | 0.214 |
+| `min_water_level_mean_annual_m_abs` | 0.214 |
+| `n_water_obs` | 0.000 |
+| `n_wind_obs` | 0.000 |
+| `profile_id` | 0.000 |
+| `profile_name` | 0.000 |
+| `profile_num` | 0.000 |
+| `qc_flag_analysis_safe` | 0.000 |
+| `qc_note_analysis_safe` | 0.000 |
+| `range_water_level_max_annual_m_abs` | 0.214 |
+| `range_water_level_mean_annual_m_abs` | 0.214 |
+| `retreat_abs_m` | 0.000 |
+| `retreat_m` | 0.000 |
+| `retreat_rate_abs_m_per_year` | 0.000 |
+| `retreat_rate_m_per_year` | 0.000 |
+| `shore_orientation_deg` | 0.000 |
+| `shore_orientation_text` | 0.000 |
+| `shore_type` | 0.000 |
+| `site_id` | 0.000 |
+| `site_name` | 0.000 |
+| `water_context_scope` | 0.214 |
+| `water_fill_confidence` | 0.000 |
+| `water_fill_method` | 0.000 |
+| `water_fill_source` | 0.000 |
+| `water_fill_source_tier` | 0.000 |
+| `water_fill_status` | 0.000 |
+| `water_fill_validation_note` | 0.000 |
+| `water_time_resolution` | 0.214 |
+| `wind_fill_confidence` | 0.000 |
+| `wind_fill_method` | 0.000 |
+| `wind_fill_source` | 0.000 |
+| `wind_fill_source_tier` | 0.000 |
+| `wind_fill_status` | 0.000 |
+| `wind_fill_validation_note` | 0.000 |
+| `years_between` | 0.000 |
 
 ### `data/processed/final_dataset_for_modeling.csv`
 

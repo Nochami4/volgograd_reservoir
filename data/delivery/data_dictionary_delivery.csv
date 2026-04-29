@@ -1,0 +1,183 @@
+Файл,Исходная таблица,Название столбца в delivery,Исходное имя столбца,Описание,Единицы,Примечание
+sites_delivery.csv,data/processed/sites.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+sites_delivery.csv,data/processed/sites.csv,site_name,site_name,Название участка наблюдений.,,
+sites_delivery.csv,data/processed/sites.csv,shore_type,shore_type,Тип или положение берега по исходному справочнику.,,
+sites_delivery.csv,data/processed/sites.csv,shore_orientation_text,shore_orientation_text,Текстовое описание ориентации берега из исходного файла.,,
+sites_delivery.csv,data/processed/sites.csv,shore_orientation_deg,shore_orientation_deg,"Ориентация берега в градусах, если она была определена однозначно.",градусы,
+sites_delivery.csv,data/processed/sites.csv,exposure_sectors_text,exposure_sectors_text,Перечень секторов экспозиции участка.,,
+sites_delivery.csv,data/processed/sites.csv,lithology_text,lithology_text,Литологическое описание береговых пород.,,
+sites_delivery.csv,data/processed/sites.csv,lithology_class,lithology_class,Укрупнённый класс литологии по устойчивости.,,
+profiles_delivery.csv,data/processed/profiles.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+profiles_delivery.csv,data/processed/profiles.csv,site_name,site_name,Название участка наблюдений.,,
+profiles_delivery.csv,data/processed/profiles.csv,profile_id,profile_id,Стабильный код профиля для связи таблиц.,,
+profiles_delivery.csv,data/processed/profiles.csv,profile_num,profile_num,Числовой номер профиля.,,
+profiles_delivery.csv,data/processed/profiles.csv,profile_name,profile_name,Название профиля в исходных материалах.,,
+profiles_delivery.csv,data/processed/profiles.csv,start_date,start_date,"Дата первого наблюдения, связанного с профилем.",дата,
+profiles_delivery.csv,data/processed/profiles.csv,end_date,end_date,"Дата последнего наблюдения, связанного с профилем.",дата,
+profiles_delivery.csv,data/processed/profiles.csv,n_observations,n_observations,Число наблюдений по профилю в исходном ряду.,шт.,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,obs_id,obs_id,Стабильный код отдельного наблюдения.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,site_name,site_name,Название участка наблюдений.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,profile_id,profile_id,Стабильный код профиля для связи таблиц.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,profile_num,profile_num,Числовой номер профиля.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,profile_name,profile_name,Название профиля в исходных материалах.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,obs_date,obs_date,Дата наблюдения.,дата,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,survey_year,survey_year,"Год наблюдения, выделенный из даты.",год,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,measured_point_name,measured_point_name,Обозначение точки или створа в исходной записи.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,pn_name,pn_name,"Постоянный пункт, относительно которого приведено положение бровки.",,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,raw_measured_distance_m,raw_measured_distance_m,Измеренное расстояние до бровки в исходной записи.,м,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,gp_to_pn_offset_m,gp_to_pn_offset_m,Смещение от точки измерения до постоянного пункта.,м,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,brow_position_pn_m,brow_position_pn_m,Положение бровки относительно постоянного пункта.,м,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,brow_position_raw_m,brow_position_raw_m,Положение бровки в исходной системе отсчёта.,м,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,qc_flags_display,delivery_qc_flags,Человеко-понятное перечисление основных ограничений и предупреждений по записи.,,
+shoreline_observations_delivery.csv,data/processed/shoreline_observations.csv,record_note,delivery_record_note,Дополнительное примечание по записи для внешнего читателя.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,interval_id,interval_id,Стабильный код интервала между соседними наблюдениями профиля.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,site_name,site_name,Название участка наблюдений.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,profile_id,profile_id,Стабильный код профиля для связи таблиц.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,profile_num,profile_num,Числовой номер профиля.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,profile_name,profile_name,Название профиля в исходных материалах.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,date_start,date_start,Дата начала интервала.,дата,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,date_end,date_end,Дата конца интервала.,дата,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,days_between,days_between,Длина интервала в днях.,дни,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,years_between,years_between,Длина интервала в годах.,годы,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,brow_pos_start_m,brow_pos_start_m,Положение бровки в начале интервала.,м,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,brow_pos_end_m,brow_pos_end_m,Положение бровки в конце интервала.,м,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,retreat_m,retreat_m,Смещение бровки за интервал в принятой профильной системе координат.,м,Знак показывает направление в профильной системе координат и не должен автоматически трактоваться как готовая физическая категория.
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,retreat_rate_m_per_year,retreat_rate_m_per_year,Средняя скорость смещения бровки за интервал.,м/год,Знак показывает направление в профильной системе координат.
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,retreat_abs_m,retreat_abs_m,Абсолютная величина смещения без учёта знака.,м,Эта метрика безопаснее для описательного сравнения между участками.
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,retreat_rate_abs_m_per_year,retreat_rate_abs_m_per_year,Абсолютная скорость смещения без учёта знака.,м/год,Эта метрика безопаснее для описательного сравнения между участками.
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,n_raw_points_used,n_raw_points_used,"Число исходных наблюдений, использованных при расчёте интервала.",шт.,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,qc_flags_display,delivery_qc_flags,Человеко-понятное перечисление основных ограничений и предупреждений по записи.,,
+interval_metrics_delivery.csv,data/processed/interval_metrics.csv,qc_note_display,delivery_qc_note,Человеко-понятный комментарий по качеству данных и ограничениям интерпретации.,,
+base_points_delivery.csv,data/processed/base_points_current.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+base_points_delivery.csv,data/processed/base_points_current.csv,site_name,site_name,Название участка наблюдений.,,
+base_points_delivery.csv,data/processed/base_points_current.csv,base_point_name,base_point_name_delivery,Понятное обозначение базисной точки.,,
+base_points_delivery.csv,data/processed/base_points_current.csv,base_point_date,delivery_base_point_date,"Дата точки; если точная дата отсутствует, сохраняется исходный текст даты.",,
+base_points_delivery.csv,data/processed/base_points_current.csv,y_m,y_m,Координата Y базисной точки.,м,
+base_points_delivery.csv,data/processed/base_points_current.csv,x_m,x_m,Координата X базисной точки.,м,
+base_points_delivery.csv,data/processed/base_points_current.csv,accuracy_m,accuracy_m,"Оценка точности координат, если она указана.",м,
+base_points_delivery.csv,data/processed/base_points_current.csv,base_point_status,delivery_base_point_status,Человеко-понятный статус точки.,,
+base_points_delivery.csv,data/processed/base_points_current.csv,base_point_note,delivery_base_point_note,Краткое пояснение по ограничениям или особенностям записи.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,interval_id,interval_id,Стабильный код интервала между соседними наблюдениями профиля.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,site_name,site_name,Название участка наблюдений.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,profile_id,profile_id,Стабильный код профиля для связи таблиц.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,profile_num,profile_num,Числовой номер профиля.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,profile_name,profile_name,Название профиля в исходных материалах.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,date_start,date_start,Дата начала интервала.,дата,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,date_end,date_end,Дата конца интервала.,дата,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,days_between,days_between,Длина интервала в днях.,дни,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,years_between,years_between,Длина интервала в годах.,годы,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,retreat_m,retreat_m,Смещение бровки за интервал в принятой профильной системе координат.,м,Знак показывает направление в профильной системе координат и не должен автоматически трактоваться как готовая физическая категория.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,retreat_rate_m_per_year,retreat_rate_m_per_year,Средняя скорость смещения бровки за интервал.,м/год,Знак показывает направление в профильной системе координат.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,retreat_abs_m,retreat_abs_m,Абсолютная величина смещения без учёта знака.,м,Эта метрика безопаснее для описательного сравнения между участками.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,retreat_rate_abs_m_per_year,retreat_rate_abs_m_per_year,Абсолютная скорость смещения без учёта знака.,м/год,Эта метрика безопаснее для описательного сравнения между участками.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,n_raw_points_used,n_raw_points_used,"Число исходных наблюдений, использованных при расчёте интервала.",шт.,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,shore_type,shore_type,Тип или положение берега по исходному справочнику.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,shore_orientation_text,shore_orientation_text,Текстовое описание ориентации берега из исходного файла.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,shore_orientation_deg,shore_orientation_deg,"Ориентация берега в градусах, если она была определена однозначно.",градусы,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,exposure_sectors_text,exposure_sectors_text,Перечень секторов экспозиции участка.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,lithology_text,lithology_text,Литологическое описание береговых пород.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,lithology_class,lithology_class,Укрупнённый класс литологии по устойчивости.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,start_date,start_date,"Дата первого наблюдения, связанного с профилем.",дата,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,end_date,end_date,"Дата последнего наблюдения, связанного с профилем.",дата,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,n_observations,n_observations,Число наблюдений по профилю в исходном ряду.,шт.,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,n_wind_obs,n_wind_obs,"Число наблюдений ветра, попавших в интервал.",шт.,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,mean_wind_speed_ms,mean_wind_speed_ms,Средняя скорость ветра внутри интервала.,м/с,Из-за малого покрытия такие показатели годятся только для ориентировочной оценки.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,max_wind_speed_ms,max_wind_speed_ms,Максимальная скорость ветра внутри интервала.,м/с,Из-за малого покрытия такие показатели годятся только для ориентировочной оценки.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,coverage_wind,coverage_wind,"Доля дней интервала, покрытых доступными наблюдениями ветра.",доля от 0 до 1,"Низкое покрытие означает, что ветер нельзя интерпретировать как надёжный причинный фактор."
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,n_water_obs,n_water_obs,"Число годовых значений уровня воды, попавших в интервал.",шт.,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,coverage_water,coverage_water,"Доля лет интервала, для которых в текущем water-layer есть данные.",доля от 0 до 1,"Это покрытие годового контекста, а не полнота локального датированного ряда."
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,mean_water_level_mean_annual_m_abs,mean_water_level_mean_annual_m_abs,Среднее по годам значение annual mean water level для интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,max_water_level_mean_annual_m_abs,max_water_level_mean_annual_m_abs,Максимум annual mean water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,min_water_level_mean_annual_m_abs,min_water_level_mean_annual_m_abs,Минимум annual mean water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,range_water_level_mean_annual_m_abs,range_water_level_mean_annual_m_abs,Размах annual mean water level внутри интервала.,м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,mean_water_level_max_annual_m_abs,mean_water_level_max_annual_m_abs,Среднее по годам значение annual maximum water level для интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,max_water_level_max_annual_m_abs,max_water_level_max_annual_m_abs,Максимум annual maximum water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,min_water_level_max_annual_m_abs,min_water_level_max_annual_m_abs,Минимум annual maximum water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,range_water_level_max_annual_m_abs,range_water_level_max_annual_m_abs,Размах annual maximum water level внутри интервала.,м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,water_context_scope,water_context_scope,К какому гидрологическому контексту относится показатель воды.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,water_time_resolution,water_time_resolution,Временное разрешение источника воды.,,Сейчас вода в основном доступна только по годам.
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,qc_flags_display,delivery_qc_flags,Человеко-понятное перечисление основных ограничений и предупреждений по записи.,,
+analysis_ready_delivery.csv,data/processed/analysis_ready.csv,qc_note_display,delivery_qc_note,Человеко-понятный комментарий по качеству данных и ограничениям интерпретации.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,interval_id,interval_id,Стабильный код интервала между соседними наблюдениями профиля.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,site_name,site_name,Название участка наблюдений.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,profile_id,profile_id,Стабильный код профиля для связи таблиц.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,profile_num,profile_num,Числовой номер профиля.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,profile_name,profile_name,Название профиля в исходных материалах.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,date_start,date_start,Дата начала интервала.,дата,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,date_end,date_end,Дата конца интервала.,дата,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,days_between,days_between,Длина интервала в днях.,дни,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,years_between,years_between,Длина интервала в годах.,годы,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,retreat_m,retreat_m,Смещение бровки за интервал в принятой профильной системе координат.,м,Знак показывает направление в профильной системе координат и не должен автоматически трактоваться как готовая физическая категория.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,retreat_rate_m_per_year,retreat_rate_m_per_year,Средняя скорость смещения бровки за интервал.,м/год,Знак показывает направление в профильной системе координат.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,retreat_abs_m,retreat_abs_m,Абсолютная величина смещения без учёта знака.,м,Эта метрика безопаснее для описательного сравнения между участками.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,retreat_rate_abs_m_per_year,retreat_rate_abs_m_per_year,Абсолютная скорость смещения без учёта знака.,м/год,Эта метрика безопаснее для описательного сравнения между участками.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,n_raw_points_used,n_raw_points_used,"Число исходных наблюдений, использованных при расчёте интервала.",шт.,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,shore_type,shore_type,Тип или положение берега по исходному справочнику.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,shore_orientation_text,shore_orientation_text,Текстовое описание ориентации берега из исходного файла.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,shore_orientation_deg,shore_orientation_deg,"Ориентация берега в градусах, если она была определена однозначно.",градусы,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,exposure_sectors_text,exposure_sectors_text,Перечень секторов экспозиции участка.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,lithology_text,lithology_text,Литологическое описание береговых пород.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,lithology_class,lithology_class,Укрупнённый класс литологии по устойчивости.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,start_date,start_date,"Дата первого наблюдения, связанного с профилем.",дата,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,end_date,end_date,"Дата последнего наблюдения, связанного с профилем.",дата,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,n_observations,n_observations,Число наблюдений по профилю в исходном ряду.,шт.,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,n_water_obs,n_water_obs,"Число годовых значений уровня воды, попавших в интервал.",шт.,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,coverage_water,coverage_water,"Доля лет интервала, для которых в текущем water-layer есть данные.",доля от 0 до 1,"Это покрытие годового контекста, а не полнота локального датированного ряда."
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,mean_water_level_mean_annual_m_abs,mean_water_level_mean_annual_m_abs,Среднее по годам значение annual mean water level для интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,max_water_level_mean_annual_m_abs,max_water_level_mean_annual_m_abs,Максимум annual mean water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,min_water_level_mean_annual_m_abs,min_water_level_mean_annual_m_abs,Минимум annual mean water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,range_water_level_mean_annual_m_abs,range_water_level_mean_annual_m_abs,Размах annual mean water level внутри интервала.,м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,mean_water_level_max_annual_m_abs,mean_water_level_max_annual_m_abs,Среднее по годам значение annual maximum water level для интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,max_water_level_max_annual_m_abs,max_water_level_max_annual_m_abs,Максимум annual maximum water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,min_water_level_max_annual_m_abs,min_water_level_max_annual_m_abs,Минимум annual maximum water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,range_water_level_max_annual_m_abs,range_water_level_max_annual_m_abs,Размах annual maximum water level внутри интервала.,м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,water_context_scope,water_context_scope,К какому гидрологическому контексту относится показатель воды.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,water_time_resolution,water_time_resolution,Временное разрешение источника воды.,,Сейчас вода в основном доступна только по годам.
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,history_start_year,history_start_year,Год начала наблюдений по данному профилю.,год,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,history_start_group,history_start_group,Укрупнённая группа по началу истории наблюдений профиля.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,has_conflicting_shoreline_duplicates,has_conflicting_shoreline_duplicates,Есть ли в контексте профиля конфликтующие дубли береговых наблюдений.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,conflicting_duplicate_group_count,conflicting_duplicate_group_count,Сколько конфликтующих групп дублей связано с профилем.,шт.,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,qc_flags_display,delivery_qc_flags,Человеко-понятное перечисление основных ограничений и предупреждений по записи.,,
+analysis_safe_subset_delivery.csv,data/processed/analysis_safe_subset.csv,qc_note_display,delivery_qc_note,Человеко-понятный комментарий по качеству данных и ограничениям интерпретации.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,interval_id,interval_id,Стабильный код интервала между соседними наблюдениями профиля.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,site_id,site_id,Стабильный код участка для связи таблиц между собой.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,site_name,site_name,Название участка наблюдений.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,profile_id,profile_id,Стабильный код профиля для связи таблиц.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,profile_num,profile_num,Числовой номер профиля.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,profile_name,profile_name,Название профиля в исходных материалах.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,date_start,date_start,Дата начала интервала.,дата,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,date_end,date_end,Дата конца интервала.,дата,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,days_between,days_between,Длина интервала в днях.,дни,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,years_between,years_between,Длина интервала в годах.,годы,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,retreat_m,retreat_m,Смещение бровки за интервал в принятой профильной системе координат.,м,Знак показывает направление в профильной системе координат и не должен автоматически трактоваться как готовая физическая категория.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,retreat_rate_m_per_year,retreat_rate_m_per_year,Средняя скорость смещения бровки за интервал.,м/год,Знак показывает направление в профильной системе координат.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,retreat_abs_m,retreat_abs_m,Абсолютная величина смещения без учёта знака.,м,Эта метрика безопаснее для описательного сравнения между участками.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,retreat_rate_abs_m_per_year,retreat_rate_abs_m_per_year,Абсолютная скорость смещения без учёта знака.,м/год,Эта метрика безопаснее для описательного сравнения между участками.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,shore_type,shore_type,Тип или положение берега по исходному справочнику.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,shore_orientation_text,shore_orientation_text,Текстовое описание ориентации берега из исходного файла.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,shore_orientation_deg,shore_orientation_deg,"Ориентация берега в градусах, если она была определена однозначно.",градусы,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,exposure_sectors_text,exposure_sectors_text,Перечень секторов экспозиции участка.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,lithology_text,lithology_text,Литологическое описание береговых пород.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,lithology_class,lithology_class,Укрупнённый класс литологии по устойчивости.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,n_water_obs,n_water_obs,"Число годовых значений уровня воды, попавших в интервал.",шт.,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,coverage_water,coverage_water,"Доля лет интервала, для которых в текущем water-layer есть данные.",доля от 0 до 1,"Это покрытие годового контекста, а не полнота локального датированного ряда."
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,mean_water_level_mean_annual_m_abs,mean_water_level_mean_annual_m_abs,Среднее по годам значение annual mean water level для интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,max_water_level_mean_annual_m_abs,max_water_level_mean_annual_m_abs,Максимум annual mean water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,min_water_level_mean_annual_m_abs,min_water_level_mean_annual_m_abs,Минимум annual mean water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,range_water_level_mean_annual_m_abs,range_water_level_mean_annual_m_abs,Размах annual mean water level внутри интервала.,м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,mean_water_level_max_annual_m_abs,mean_water_level_max_annual_m_abs,Среднее по годам значение annual maximum water level для интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,max_water_level_max_annual_m_abs,max_water_level_max_annual_m_abs,Максимум annual maximum water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,min_water_level_max_annual_m_abs,min_water_level_max_annual_m_abs,Минимум annual maximum water level внутри интервала.,абс. м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,range_water_level_max_annual_m_abs,range_water_level_max_annual_m_abs,Размах annual maximum water level внутри интервала.,м,Это годовой гидрологический контекст по нижнему участку водохранилища.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,water_context_scope,water_context_scope,К какому гидрологическому контексту относится показатель воды.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,water_time_resolution,water_time_resolution,Временное разрешение источника воды.,,Сейчас вода в основном доступна только по годам.
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,history_start_year,history_start_year,Год начала наблюдений по данному профилю.,год,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,history_start_group,history_start_group,Укрупнённая группа по началу истории наблюдений профиля.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,has_conflicting_shoreline_duplicates,has_conflicting_shoreline_duplicates,Есть ли в контексте профиля конфликтующие дубли береговых наблюдений.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,conflicting_duplicate_group_count,conflicting_duplicate_group_count,Сколько конфликтующих групп дублей связано с профилем.,шт.,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,qc_flags_display,delivery_qc_flags,Человеко-понятное перечисление основных ограничений и предупреждений по записи.,,
+final_dataset_for_modeling_delivery.csv,data/processed/final_dataset_for_modeling.csv,qc_note_display,delivery_qc_note,Человеко-понятный комментарий по качеству данных и ограничениям интерпретации.,,

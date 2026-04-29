@@ -2,7 +2,7 @@ PYTHON ?= python3
 VENV ?= .venv
 ACTIVATE = . $(VENV)/bin/activate
 
-.PHONY: install build-datasets qc clean
+.PHONY: install build-datasets build-delivery qc clean
 
 install:
 	$(PYTHON) -m venv $(VENV)
@@ -11,6 +11,10 @@ install:
 
 build-datasets:
 	$(ACTIVATE) && python -m src.pipeline
+
+build-delivery: build-datasets
+	$(ACTIVATE) && python -m src.analysis.first_stage_analysis
+	$(ACTIVATE) && python -m src.export.build_delivery_exports
 
 qc:
 	$(ACTIVATE) && python -m src.qc.run_qc
