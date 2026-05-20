@@ -8,37 +8,54 @@ from pathlib import Path
 import pandas as pd
 
 from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, merge_with_checks, relative_to_root, setup_logging
+from src.qc_messages import (
+    LEGACY_SCOPE_NOTE_TRANSLATIONS,
+    LOWER_SECTION_FALLBACK_SCOPE,
+    SCOPE_NOTE_METADATA_ONLY,
+    SCOPE_NOTE_MOLCHANOVSKY_MATCH,
+    SCOPE_NOTE_NEEDS_REVIEW,
+    SCOPE_NOTE_NOT_CONFIRMED_IN_REVIEW,
+    SCOPE_NOTE_PROJECT_LISTED,
+    analysis_low_water_coverage_note,
+    analysis_low_wind_coverage_note,
+    analysis_no_wind_obs_note,
+    analysis_year_only_water_note,
+    water_interval_aggregate_note,
+)
 
 LOW_COVERAGE_THRESHOLD = 0.8
 SITE_SCOPE_COLUMNS = ["site_id", "site_name", "in_project_scope", "scope_status", "scope_note"]
 PROJECT_SCOPE_DEFAULTS = {
-    "pichuga_yuzhny": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "novonikolskoe": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "proleyskiy": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "nizhniy_balykley": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "burty": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "nizhniy_urakov": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "urakov_bugor": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "molchanovka": (True, "reviewed", "Listed on the project map as Молчановский and matched to site Молчановка."),
-    "berezhnovka": (True, "reviewed", "Listed on the project map and in the source-document scope."),
-    "suvodskaya": (False, "reviewed", "Present in the metadata workbook but not listed among the nine scoped map/source-document sites."),
+    "pichuga_yuzhny": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "novonikolskoe": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "proleyskiy": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "nizhniy_balykley": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "burty": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "nizhniy_urakov": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "urakov_bugor": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "molchanovka": (True, "reviewed", SCOPE_NOTE_MOLCHANOVSKY_MATCH),
+    "berezhnovka": (True, "reviewed", SCOPE_NOTE_PROJECT_LISTED),
+    "suvodskaya": (False, "reviewed", SCOPE_NOTE_METADATA_ONLY),
 }
+WATER_RESOLVED_COLUMNS = [
+    "water_level_mean_annual_m_abs",
+    "water_level_max_annual_m_abs",
+]
 
 
 def prepare_water_levels(water_df: pd.DataFrame) -> pd.DataFrame:
-    """Select a first available numeric level column without guessing source semantics."""
+    """Validate resolved annual water columns without reintroducing ambiguity."""
 
     df = water_df.copy()
-    level_columns = [column for column in df.columns if column.startswith("level_col_") and column.endswith("_m")]
-    if not level_columns:
-        df["analysis_level_m"] = pd.NA
-        df["water_variable_is_ambiguous"] = False
-        return df
-
-    sorted_level_columns = sorted(level_columns)
-    df[sorted_level_columns] = df[sorted_level_columns].apply(pd.to_numeric, errors="coerce")
-    df["analysis_level_m"] = df[sorted_level_columns].bfill(axis=1).iloc[:, 0]
-    df["water_variable_is_ambiguous"] = True
+    for column in WATER_RESOLVED_COLUMNS:
+        if column not in df.columns:
+            df[column] = pd.NA
+        df[column] = pd.to_numeric(df[column], errors="coerce")
+    df["water_time_resolution"] = df["obs_date"].isna().map(lambda is_year_only: "year_only" if is_year_only else "full_date")
+    if "water_section_name" not in df.columns:
+        df["water_section_name"] = pd.NA
+    df["water_context_scope"] = df["water_section_name"].fillna(LOWER_SECTION_FALLBACK_SCOPE)
+    df["water_variable_is_ambiguous"] = False
     return df
 
 
@@ -69,14 +86,31 @@ def aggregate_water_for_interval(interval_row: pd.Series, water_df: pd.DataFrame
     ].copy()
     years_spanned = max(interval_row["date_end_dt"].year - interval_row["date_start_dt"].year + 1, 1)
     coverage = subset["year"].nunique() / years_spanned if not subset.empty else 0.0
+    mean_annual = subset["water_level_mean_annual_m_abs"]
+    max_annual = subset["water_level_max_annual_m_abs"]
+    water_qc_note = None
+    if not subset.empty:
+        section_names = sorted({str(value) for value in subset["water_section_name"].dropna().astype(str) if str(value)})
+        section_label = section_names[0] if section_names else "Нижний участок водохранилища"
+        water_qc_note = water_interval_aggregate_note(section_label)
     return {
         "n_water_obs": int(len(subset)),
-        "mean_level": subset["analysis_level_m"].mean() if not subset.empty else None,
-        "max_level": subset["analysis_level_m"].max() if not subset.empty else None,
-        "min_level": subset["analysis_level_m"].min() if not subset.empty else None,
-        "range_level": (subset["analysis_level_m"].max() - subset["analysis_level_m"].min()) if not subset.empty else None,
+        "mean_water_level_mean_annual_m_abs": mean_annual.mean() if not subset.empty else None,
+        "max_water_level_mean_annual_m_abs": mean_annual.max() if not subset.empty else None,
+        "min_water_level_mean_annual_m_abs": mean_annual.min() if not subset.empty else None,
+        "range_water_level_mean_annual_m_abs": (mean_annual.max() - mean_annual.min()) if not subset.empty else None,
+        "mean_water_level_max_annual_m_abs": max_annual.mean() if not subset.empty else None,
+        "max_water_level_max_annual_m_abs": max_annual.max() if not subset.empty else None,
+        "min_water_level_max_annual_m_abs": max_annual.min() if not subset.empty else None,
+        "range_water_level_max_annual_m_abs": (max_annual.max() - max_annual.min()) if not subset.empty else None,
+        "mean_level": mean_annual.mean() if not subset.empty else None,
+        "max_level": mean_annual.max() if not subset.empty else None,
+        "min_level": mean_annual.min() if not subset.empty else None,
+        "range_level": (mean_annual.max() - mean_annual.min()) if not subset.empty else None,
         "coverage_water": coverage,
-        "water_qc_note": "Water aggregation uses neutral level_col_* fields without semantic relabeling; interpret only as a draft technical proxy." if not subset.empty else None,
+        "water_time_resolution": "year_only" if not subset.empty else None,
+        "water_context_scope": subset["water_context_scope"].dropna().iloc[0] if not subset.empty and not subset["water_context_scope"].dropna().empty else None,
+        "water_qc_note": water_qc_note,
         "water_variable_is_ambiguous": bool(subset["water_variable_is_ambiguous"].any()) if not subset.empty else False,
     }
 
@@ -86,9 +120,9 @@ def ensure_site_scope_review(sites_df: pd.DataFrame) -> pd.DataFrame:
 
     scope_path = INTERIM_DIR / "site_scope_review.csv"
     base_scope = sites_df[["site_id", "site_name"]].drop_duplicates().copy()
-    base_scope["in_project_scope"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", "Scope status still needs review."))[0])
-    base_scope["scope_status"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", "Scope status still needs review."))[1])
-    base_scope["scope_note"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", "Scope status still needs review."))[2])
+    base_scope["in_project_scope"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", SCOPE_NOTE_NEEDS_REVIEW))[0])
+    base_scope["scope_status"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", SCOPE_NOTE_NEEDS_REVIEW))[1])
+    base_scope["scope_note"] = base_scope["site_id"].map(lambda site_id: PROJECT_SCOPE_DEFAULTS.get(site_id, (pd.NA, "needs_review", SCOPE_NOTE_NEEDS_REVIEW))[2])
 
     if scope_path.exists():
         existing = pd.read_csv(scope_path, dtype=object)
@@ -106,6 +140,7 @@ def ensure_site_scope_review(sites_df: pd.DataFrame) -> pd.DataFrame:
             suffixes=("_default", ""),
         )
         stale_existing_mask = scope_df["scope_note"].fillna("").astype(str).str.startswith("Auto-initialized from sites.csv")
+        scope_df["scope_note"] = scope_df["scope_note"].replace(LEGACY_SCOPE_NOTE_TRANSLATIONS)
         scope_df.loc[stale_existing_mask, "in_project_scope"] = pd.NA
         scope_df.loc[stale_existing_mask, "scope_status"] = pd.NA
         scope_df.loc[stale_existing_mask, "scope_note"] = pd.NA
@@ -139,7 +174,6 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
     wind_df["obs_date"] = pd.to_datetime(wind_df["obs_date"], errors="coerce")
     wind_df["wind_speed_ms"] = pd.to_numeric(wind_df["wind_speed_ms"], errors="coerce")
     water_df["year"] = pd.to_numeric(water_df["year"], errors="coerce")
-    water_df["analysis_level_m"] = pd.to_numeric(water_df["analysis_level_m"], errors="coerce")
 
     merged = merge_with_checks(
         interval_df,
@@ -192,20 +226,18 @@ def build_analysis_ready(output_path: Path | None = None) -> Path:
         if pd.notna(row["coverage_wind"]) and row["coverage_wind"] < LOW_COVERAGE_THRESHOLD:
             row_flags.append("LOW_COVERAGE_WIND")
             if row["n_wind_obs"] == 0:
-                row_notes.append("No wind observations fall inside this shoreline interval in the currently available local meteorological workbook.")
+                row_notes.append(analysis_no_wind_obs_note())
             else:
-                row_notes.append(
-                    f"Wind coverage is {row['coverage_wind']:.2f}, below the {LOW_COVERAGE_THRESHOLD:.1f} threshold; interval summaries should be treated as screening-only."
-                )
+                row_notes.append(analysis_low_wind_coverage_note(float(row["coverage_wind"]), LOW_COVERAGE_THRESHOLD))
         if pd.notna(row["coverage_water"]) and row["coverage_water"] < LOW_COVERAGE_THRESHOLD:
             row_flags.append("LOW_COVERAGE_WATER")
-            row_notes.append(f"Water coverage is {row['coverage_water']:.2f}, below the {LOW_COVERAGE_THRESHOLD:.1f} threshold.")
-        if bool(row.get("water_variable_is_ambiguous")):
-            row_flags.append("AMBIGUOUS_WATER_VARIABLE")
-            row_notes.append("Water metrics use neutral `level_col_*` fields whose physical meaning is still unresolved.")
+            row_notes.append(analysis_low_water_coverage_note(float(row["coverage_water"]), LOW_COVERAGE_THRESHOLD))
+        if pd.notna(row.get("n_water_obs")) and float(row.get("n_water_obs") or 0) > 0 and str(row.get("water_time_resolution") or "") == "year_only":
+            row_flags.append("YEAR_ONLY_WATER_SOURCE")
+            row_notes.append(analysis_year_only_water_note())
         if str(row.get("scope_status") or "") == "needs_review":
             row_flags.append("SITE_SCOPE_NEEDS_REVIEW")
-            row_notes.append("This site has not yet been explicitly confirmed in `data/interim/site_scope_review.csv`.")
+            row_notes.append(SCOPE_NOTE_NOT_CONFIRMED_IN_REVIEW)
         if pd.notna(row.get("water_qc_note")) and row["water_qc_note"]:
             row_notes.append(row["water_qc_note"])
         qc_flags.append(";".join(row_flags) if row_flags else None)

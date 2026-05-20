@@ -1,290 +1,348 @@
-# Data Tables
+# Таблицы данных
 
-This project builds reproducible derived datasets for abrasion-prone shores of the Volgograd Reservoir.
+Этот проект собирает воспроизводимый набор производных таблиц по данным наблюдений за береговой бровкой Волгоградского водохранилища. Эти данные используются как прикладной набор для НИР по теме «Применение нейросетей для статистической обработки информации».
 
-Current dataset status: `draft`.
+Текущий статус набора данных: рабочая воспроизводимая черновая версия. Полная версия набора ещё не считается окончательно завершённой, но текущий производный слой уже пригоден для первого этапа анализа по задачам 1–2.
 
-`dataset_status: draft`
+## Важное правило про язык и структуру
 
-## Rules For Missing Data
+Имена колонок сохранены на английском в `snake_case`, потому что они используются кодом, тестами и соединениями таблиц. Человекочитаемые пояснения, QC-заметки, review-заметки и документация ведутся на русском языке.
 
-- Raw data in `data/raw/` are never modified.
-- Missing raw values are not imputed.
-- Derived aggregates may have missing values together with `coverage_*`, `qc_flag`, and `qc_note`.
-- Every correction, fallback, or ambiguity must remain transparent in code and output tables.
+## Общие правила
 
-## Known Limitations
+- Файлы в `data/raw/` не редактируются.
+- Пропуски в raw-данных не импутируются автоматически.
+- Все производные CSV пересобираются скриптами.
+- Машинные коды вроде `qc_flag`, `qc_flag_analysis`, `point_status`, `water_time_resolution` и аналогичных полей сохраняются как стабильные технические значения.
+- Для интерпретации человеком нужно смотреть на `qc_note`, `qc_note_analysis`, `qc_note_analysis_safe`, `scope_note`, `review_reason` и тематические markdown-отчёты.
 
-- `base_points` are now rebuilt into transparent `history/current` layers, but some rows still require manual review because the legacy `.doc` loses table structure in string extraction.
-- Water-level columns remain ambiguous and therefore stay neutral as `level_col_*`.
-- Wind coverage is incomplete for many shoreline intervals, so interval-level wind summaries should be treated as screening variables only.
-- Duplicate shoreline observation keys exist and are tracked explicitly in `data/interim/shoreline_duplicate_report.csv`.
-- Site project scope is not silently filtered; review it in `data/interim/site_scope_review.csv`.
+## Какие таблицы являются основными
 
-## Generated Tables
+Основные таблицы в `data/processed/`:
+
+- `sites.csv` — справочник береговых участков.
+- `profiles.csv` — справочник профилей.
+- `shoreline_observations.csv` — основной слой береговых наблюдений.
+- `interval_metrics.csv` — интервалы между соседними наблюдениями.
+- `analysis_ready.csv` — полный черновой слой после объединения интервалов с контекстом ветра, воды и scope/QC.
+- `analysis_safe_subset.csv` — безопасный аналитический слой для задач 1–2.
+- `final_dataset_for_modeling.csv` — компактный основной табличный экспорт.
+
+Именно `final_dataset_for_modeling.csv` и `analysis_safe_subset.csv` стоит показывать как главные результаты первого этапа.
+
+Служебные, но рабочие таблицы:
+
+- `wind_obs_hourly.csv`
+- `water_levels_raw.csv`
+- `base_points_history.csv`
+- `base_points_current.csv`
+- `base_points.csv`
+
+Экспериментальный дополнительный слой:
+
+- `final_dataset_enriched_open_sources.csv`
+
+Он не заменяет `final_dataset_for_modeling.csv`, а добавляет отдельные колонки обогащения по открытым источникам с прозрачным происхождением данных.
+
+## Краткая карта processed-таблиц
 
 ### `data/processed/sites.csv`
 
-- Purpose: reference table for study sites and shoreline characteristics.
-- Source: `data/raw/site_metadata/Литология и орентировка берега.xlsx`
-- Columns:
-- `site_id`: stable normalized identifier used for joins.
-- `site_name`: site name as read from the source sheet.
-- `shore_type`: shoreline side or type text.
-- `shore_orientation_text`: textual shoreline orientation.
-- `shore_orientation_deg`: orientation converted to degrees only when explicit.
-- `exposure_sectors_text`: listed exposure sectors from the source.
-- `lithology_text`: lithology description from the source.
-- `lithology_class`: explicit lithology hardness class when present.
-- `notes`: extra non-empty cells beyond the main source columns.
-- `source_file`: relative path to the source workbook.
-- `source_sheet`: workbook sheet name.
+Назначение:
+справочник участков наблюдений и береговых характеристик.
+
+Ключ:
+`site_id`
+
+Основные колонки:
+`site_name`, `shore_type`, `shore_orientation_text`, `shore_orientation_deg`, `exposure_sectors_text`, `lithology_text`, `lithology_class`, `notes`
+
+Источник:
+`data/raw/site_metadata/Литология и орентировка берега.xlsx`
 
 ### `data/processed/profiles.csv`
 
-- Purpose: profile registry with date range and observation counts.
-- Source: `data/raw/profiles/251001 БРОВКИ Баранова.xls`
-- Columns:
-- `profile_id`: stable profile identifier.
-- `site_id`: normalized site id.
-- `profile_num`: extracted profile number when present.
-- `profile_name`: raw header text such as `ПРОФИЛЬ № 60`.
-- `sheet_name_raw`: source sheet name.
-- `start_date`: first parsed observation date in ISO format.
-- `end_date`: last parsed observation date in ISO format.
-- `n_observations`: count of raw rows detected in the profile block.
-- `source_file`: relative path to the source workbook.
+Назначение:
+реестр профилей с диапазоном дат и числом наблюдений.
+
+Ключ:
+`profile_id`
+
+Связь:
+`site_id`
+
+Важные колонки:
+`profile_num`, `profile_name`, `start_date`, `end_date`, `n_observations`
 
 ### `data/processed/shoreline_observations.csv`
 
-- Purpose: main raw-derived shoreline observation layer.
-- Source: `data/raw/profiles/251001 БРОВКИ Баранова.xls`
-- Columns:
-- `obs_id`: stable row identifier.
-- `site_id`: normalized site id.
-- `profile_id`: normalized profile id.
-- `obs_date`: parsed observation date in ISO format.
-- `survey_year`: year extracted from `obs_date`.
-- `measured_point_name`: raw measurement point or geodetic point name.
-- `pn_name`: permanent reference point name.
-- `raw_measured_distance_m`: raw measured distance to the brow.
-- `gp_to_pn_offset_m`: offset from measurement point to permanent origin.
-- `brow_position_pn_m`: brow position reduced to permanent origin.
-- `brow_position_raw_m`: raw brow position relative to the measurement point.
-- `raw_value_text`: preserved raw text only for fields that failed numeric or date parsing.
-- `is_missing`: row-level missingness flag for the numeric shoreline fields.
-- `missing_reason`: explicit missingness reason when set.
-- `qc_flag`: parser QC flags such as invalid dates, invalid numerics, or row notes.
-- `qc_note`: free-text note copied from source-row remarks when present.
-- `source_file`: relative path to the source workbook.
-- `source_sheet`: source sheet name.
-- `source_row`: original row number in the workbook.
-- Duplicate handling:
-- Potential duplicate keys by `(site_id, profile_id, obs_date)` are not dropped silently.
-- They are reported in `data/interim/shoreline_duplicate_report.csv`.
-- Conflicting duplicate-key rows receive `DUPLICATE_OBS_KEY`.
+Назначение:
+основной построчный слой береговых наблюдений, собранный из профильной книги.
+
+Ключ:
+`obs_id`
+
+Связи:
+`site_id`, `profile_id`
+
+Важные колонки:
+`obs_date`, `survey_year`, `measured_point_name`, `pn_name`, `raw_measured_distance_m`, `gp_to_pn_offset_m`, `brow_position_pn_m`, `brow_position_raw_m`
+
+QC-колонки:
+`is_missing`, `missing_reason`, `qc_flag`, `qc_note`
+
+Пояснение:
+`missing_reason` здесь остаётся машинным кодом, а человекочитаемое объяснение смотрите в `qc_note`.
 
 ### `data/processed/wind_obs_hourly.csv`
 
-- Purpose: meteorological wind observations in a unified long format.
-- Source: `data/raw/meteo/Камышин скорость и направление ветра.xlsx`
-- Columns:
-- `wind_obs_id`: stable observation identifier.
-- `station_id`: normalized station id, currently `kamyshin`.
-- `station_name`: station name from project context.
-- `obs_datetime`: parsed datetime when both date and hour are available.
-- `obs_date`: parsed date in ISO format.
-- `year`, `month`, `day`, `hour`: decomposed temporal fields.
-- `wind_dir_text`: raw wind direction token.
-- `wind_dir_deg`: approximate azimuth for known direction tokens.
-- `wind_speed_ms`: wind speed in m/s when parsed safely.
-- `wind_gust_ms`: gust speed when an adjacent numeric field can be interpreted safely.
-- `source_file`: relative path to the source workbook.
-- `source_sheet`: workbook sheet name, typically a year.
-- `source_row`: original row number in the workbook.
-- `is_missing`: missingness flag when wind direction and speed are both absent.
-- `missing_reason`: explicit missingness reason when set.
-- `qc_flag`: QC flags for invalid dates, missing speed, or missing direction.
-- `qc_note`: parsing note, for example when a sheet stores day and month separately from the year.
-- Validation rule:
-- Dates are accepted only within `1950-01-01 .. 2025-12-31`.
-- If a row looks like an observation but the datetime is unreliable, the row is retained with `qc_flag=invalid_datetime` and its derived temporal fields are cleared.
+Назначение:
+длинный слой локальных метеорологических наблюдений по ветру.
+
+Ключ:
+`wind_obs_id`
+
+Технические идентификаторы:
+`station_id`, `source_sheet`, `source_row`
+
+Важные колонки:
+`obs_datetime`, `obs_date`, `wind_dir_text`, `wind_dir_deg`, `wind_speed_ms`, `wind_gust_ms`
+
+QC-колонки:
+`is_missing`, `missing_reason`, `qc_flag`, `qc_note`
+
+Пояснение:
+- `missing_reason` сохранён как машинный код, например `wind_direction_and_speed_missing`.
+- Человекочитаемое описание проблем разбора и датирования находится в `qc_note`.
 
 ### `data/processed/water_levels_raw.csv`
 
-- Purpose: safe first-pass extraction of water-level blocks with ambiguous source semantics preserved.
-- Source: `data/raw/shoreline/Скорость отступания метров в год.xlsx`
-- Columns:
-- `water_obs_id`: stable observation identifier.
-- `site_id`: normalized site id.
-- `site_name`: site name normalized from the sheet title.
-- `obs_date`: intentionally empty when the source block provides year-only values.
-- `year`: year extracted from the water-level block.
-- `level_col_1_m`, `level_col_2_m`: neutral numeric columns retained without assigning hidden semantics.
-- `source_file`: relative path to the source workbook.
-- `source_sheet`: source sheet name.
-- `source_row`: original row number in the workbook.
-- `is_missing`: row-level missingness flag for retained numeric level columns.
-- `missing_reason`: explicit missingness reason when set.
-- `qc_flag`: ambiguity flag when multiple numeric level columns are retained.
-- `qc_note`: explanation that neutral column names are used because semantics remain unresolved.
-- `preferred_level_col`: technically preferred neutral column by completeness only; this is not a semantic interpretation of the variable.
-- Notes:
-- This is currently a year-only hydrological layer.
-- The extraction profile is documented in `data/interim/water_levels_profile.json`.
-- A manual interpretation manifest is maintained in `data/interim/water_levels_manual_dictionary.md`.
+Назначение:
+прозрачный годовой слой уровней воды, используемый для интервальных соединений.
+
+Ключ:
+`water_obs_id`
+
+Связи:
+`site_id`, `site_name`
+
+Контекстные колонки:
+`water_section_id`, `water_section_name`, `water_time_resolution` в производных слоях, `water_context_scope` в производных слоях
+
+Важные численные колонки:
+`water_level_mean_annual_m_abs`, `water_level_max_annual_m_abs`
+
+QC-колонки:
+`is_missing`, `missing_reason`, `qc_flag`, `qc_note`
+
+Пояснение:
+слой остаётся годовым и общим для нижнего участка водохранилища; это не локальный датированный гидрологический ряд по каждому береговому участку.
 
 ### `data/processed/base_points_history.csv`
 
-- Purpose: full recoverable history of base-point coordinates extracted from `data/raw/docs/GPS-координаты пунктов базиса с дополнениями Барановой 2024 г..doc`.
-- Each row preserves the best available source token, date token, coordinate pair, status flags, and review state.
-- Keep this table when you need provenance, partial dates, or all historical coordinate versions for one point.
-- Key columns:
-- `site_name_raw`, `site_id`
-- `base_point_name_raw`, `base_point_name_norm`
-- `obs_date_raw`, `obs_date`
-- `y_m`, `x_m`, `accuracy_m`
-- `note_raw`, `point_status`
-- `is_calculated`, `is_reinstalled`, `is_new`, `is_refined`
-- `has_uncertain_date`, `needs_manual_review`, `review_reason`
-- `source_file`, `source_row_ref`
+Назначение:
+полная история базисных точек, восстановленная из legacy `.doc`.
+
+Ключ:
+внутренне строки различаются сочетанием `site_id`, `base_point_name_norm`, `obs_date`, `source_row_ref`; отдельного стабильного row-id здесь нет.
+
+Важные колонки:
+`site_name_raw`, `site_id`, `base_point_name_raw`, `base_point_name_norm`, `obs_date_raw`, `obs_date`, `y_m`, `x_m`, `accuracy_m`, `note_raw`
+
+Review/QC-колонки:
+`point_status`, `has_uncertain_date`, `needs_manual_review`, `review_reason`
+
+Пояснение:
+`point_status` остаётся машинным нормализованным кодом; человекочитаемое объяснение спорных случаев хранится в `review_reason`.
 
 ### `data/processed/base_points_current.csv`
 
-- Purpose: one current coordinate choice per `(site_id, base_point_name_norm)` selected from `base_points_history.csv`.
-- Current selection rule:
-- Prefer rows with an explicit full `obs_date`.
-- Then prefer the latest available `obs_date`.
-- Break ties in favor of rows without uncertain dates, without calculated-only status, and without manual-review flags.
-- This table is the recommended join target for downstream georeferencing work.
+Назначение:
+одна текущая рабочая координатная версия для каждой пары `(site_id, base_point_name_norm)`.
+
+Использование:
+это рекомендованный слой для дальнейшей геопривязки.
 
 ### `data/processed/base_points.csv`
 
-- Purpose: backward-compatible alias of the current base-point layer for existing pipeline/QC code.
-- It contains the same current-coordinate rows plus a synthetic `base_point_id`.
+Назначение:
+обратноссовместимый алиас текущего слоя базисных точек.
+
+Ключ:
+`base_point_id`
 
 ### `data/processed/interval_metrics.csv`
 
-- Purpose: derived retreat metrics for neighboring shoreline observations.
-- Source: `data/processed/shoreline_observations.csv`
-- Columns:
-- `interval_id`: stable interval identifier.
-- `site_id`, `profile_id`
-- `date_start`, `date_end`: adjacent observation dates.
-- `days_between`, `years_between`
-- `brow_pos_start_m`, `brow_pos_end_m`
-- `retreat_m`: end minus start brow position.
-- `retreat_rate_m_per_year`: retreat rate over the interval.
-- `retreat_abs_m`: absolute magnitude of the brow-position change, independent of sign.
-- `retreat_rate_abs_m_per_year`: absolute annualized magnitude of change.
-- `n_raw_points_used`: number of raw rows used across both endpoint dates.
-- `calc_method`: transparent method label.
-- `qc_flag`: QC marker when date-level aggregation or source QC is present.
-- `qc_note`: extra explanation for the interval computation.
-- Sign convention:
-- `retreat_m = brow_pos_end_m - brow_pos_start_m`
-- `retreat_rate_m_per_year = retreat_m / years_between`
-- The sign therefore follows the change in normalized brow position relative to `PN`; do not reinterpret the sign physically without checking the field convention for the specific profile set.
-- For reporting a physical magnitude without sign interpretation, use `retreat_abs_m` and `retreat_rate_abs_m_per_year`.
+Назначение:
+производные интервалы между соседними береговыми наблюдениями одного профиля.
+
+Ключ:
+`interval_id`
+
+Связи:
+`site_id`, `profile_id`
+
+Основные колонки:
+`date_start`, `date_end`, `days_between`, `years_between`, `retreat_m`, `retreat_rate_m_per_year`, `retreat_abs_m`, `retreat_rate_abs_m_per_year`
+
+QC-колонки:
+`calc_method`, `qc_flag`, `qc_note`
+
+Пояснение:
+`calc_method` оставлен как машинный методический ярлык; интерпретировать его нужно через документацию, а не как человекочитаемый текст в CSV.
 
 ### `data/processed/analysis_ready.csv`
 
-- Purpose: first-pass merged analysis table for modeling and exploratory work.
-- Sources:
-- `data/processed/interval_metrics.csv`
-- `data/processed/sites.csv`
-- `data/processed/profiles.csv`
-- `data/processed/wind_obs_hourly.csv`
-- `data/processed/water_levels_raw.csv`
-- Columns:
-- All interval columns from `interval_metrics.csv`
-- Site metadata columns from `sites.csv`
-- Profile metadata columns from `profiles.csv`
+Назначение:
+полный черновой слой после объединения `interval_metrics.csv` с метаданными участков, профилей, ветром, водой и таблицей проверки состава проекта.
+
+Это полный рабочий слой, где ещё не скрываются ограничения интерпретации.
+
+Важные контекстные колонки:
 - `n_wind_obs`, `mean_wind_speed_ms`, `max_wind_speed_ms`, `coverage_wind`
-- `n_water_obs`, `mean_level`, `max_level`, `min_level`, `range_level`, `coverage_water`
-- `scope_status`: manual review status from `data/interim/site_scope_review.csv`.
-- `qc_flag_analysis`: interval-level flags such as `LOW_COVERAGE_WIND`, `LOW_COVERAGE_WATER`, `AMBIGUOUS_WATER_VARIABLE`, `SITE_SCOPE_NEEDS_REVIEW`.
-- `qc_note_analysis`: readable explanation of interval-level coverage and ambiguity issues.
+- `n_water_obs`, `coverage_water`
+- `mean_water_level_mean_annual_m_abs`, `max_water_level_mean_annual_m_abs`, `min_water_level_mean_annual_m_abs`, `range_water_level_mean_annual_m_abs`
+- `mean_water_level_max_annual_m_abs`, `max_water_level_max_annual_m_abs`, `min_water_level_max_annual_m_abs`, `range_water_level_max_annual_m_abs`
+- `water_context_scope`, `water_time_resolution`
+- `scope_status`, `scope_note`
 
-## What Is Safe To Analyze Now
+Главные QC-поля этого слоя:
+- `qc_flag_analysis` — машинные коды ограничений интервала.
+- `qc_note_analysis` — русское человекочитаемое объяснение этих ограничений.
 
-- Site-level metadata joins from `sites.csv` and `profiles.csv`.
-- Transparent shoreline interval construction from `shoreline_observations.csv` to `interval_metrics.csv`.
-- Screening summaries of wind and water coverage at the interval level.
-- Absolute shoreline-change magnitude using `retreat_abs_m` and `retreat_rate_abs_m_per_year`.
-- Descriptive plots that explicitly respect `qc_flag`, `qc_note`, and coverage columns.
+`qc_note_analysis` нужна специально для того, чтобы строку можно было показывать человеку без расшифровки флагов вручную.
 
-## What Is Not Yet Safe To Interpret
+### `data/processed/analysis_safe_subset.csv`
 
-- Any physics-based or causal interpretation that depends strongly on the meaning of `level_col_*`.
-- Fine-grained georeferencing that assumes `base_points_current.csv` is complete and fully reviewed.
-- Strong conclusions from interval-level wind aggregates where `LOW_COVERAGE_WIND` is present.
-- Interpretation of `retreat_m` sign as “erosion” versus “advance” without profile-specific field-convention checking.
+Назначение:
+безопасный аналитический слой для текущих задач 1–2.
 
-## Sign Convention
+Источник:
+`analysis_ready.csv` плюс контекст из `data/interim/shoreline_duplicate_report.csv`.
 
-- `retreat_m = brow_pos_end_m - brow_pos_start_m`
-- `retreat_rate_m_per_year = retreat_m / years_between`
-- The sign is a positional change in the normalized brow coordinate system, not an automatically interpreted geomorphic “erosion” sign.
-- For unsigned magnitude in reports, use `retreat_abs_m` and `retreat_rate_abs_m_per_year`.
+Что в нём важно:
+- сохраняются только участки, входящие в текущий подтверждённый scope;
+- добавляется контекст конфликтующих shoreline-дублей;
+- основными QC-полями становятся `qc_flag_analysis_safe` и `qc_note_analysis_safe`.
 
-## Wind Extension Required
+`qc_flag_analysis_safe` остаётся машинным кодом.
 
-- Tasks 3, 5, and 6 are not yet analysis-safe with the current local wind workbook alone.
-- The current interval linkage often yields `LOW_COVERAGE_WIND` because many shoreline intervals are much longer than the locally available meteorological coverage.
-- Extending the wind series or adding another transparent local source is required before stronger wind-retreat interpretation.
+`qc_note_analysis_safe` — это русское консолидированное пояснение по строке, включая ограничения исходного ряда, проблемы покрытия и duplicate-контекст.
 
-## Water Semantics Still Ambiguous
+### `data/processed/final_dataset_for_modeling.csv`
 
-- `level_col_1_m` and `level_col_2_m` remain neutral placeholders.
-- `preferred_level_col` is a completeness heuristic only.
-- Do not relabel these columns semantically until the source workbook is decoded manually.
+Назначение:
+компактный основной export-набор для анализа и последующей подготовки моделей.
 
-## Base Points Manual Review
+Статус:
+это основной итоговый слой, который стоит показывать как главную итоговую таблицу.
 
-- `base_points_history.csv` retains rows with partial dates, inferred site linkage, and conflict markers instead of dropping them.
-- `base_points_current.csv` picks one operational coordinate set per point, but this does not erase unresolved source ambiguity.
-- A row is treated as `manual review` when at least one of the following is true:
-- `site_id` cannot be resolved safely from project point names or an explicit project mapping.
-- `obs_date_raw` is partial or missing, so `obs_date` cannot be normalized to a full ISO date.
-- The extracted point label is truncated or otherwise suspicious.
-- The coordinate assignment conflicts with another known point cluster.
-- Explicit special case: `Ураков Бугор`, point `3`, `2019-08-14`, because its coordinates are suspiciously aligned with the `Нижний Ураков` point-3 cluster.
+Источник:
+`analysis_safe_subset.csv`
 
-## Interim Outputs
+Что из него убрано:
+- полностью пустые колонки;
+- дублирующие алиасы;
+- часть расширенных технических и provenance-полей, которые всё ещё доступны в более широких слоях.
 
-### `data/interim/shoreline_observations_log.json`
+Что в нём оставлено:
+- ключи, даты и интервальные метрики;
+- базовый береговой контекст;
+- агрегаты воды;
+- duplicate-контекст;
+- `qc_flag_analysis_safe`
+- `qc_note_analysis_safe`
 
-- Purpose: machine-readable parser log with counts of rows read, missing values, and suspicious records.
+### `data/processed/final_dataset_enriched_open_sources.csv`
 
-### `data/interim/shoreline_duplicate_report.csv`
+Назначение:
+отдельный дополнительный набор, который добавляет к `final_dataset_for_modeling.csv` прозрачные признаки обогащения по открытым источникам.
 
-- Purpose: duplicate-key manifest for shoreline observations grouped by `(site_id, profile_id, obs_date)`.
+Статус:
+это не главный датасет для показа преподавателю и не замена основному итоговому набору.
 
-### `data/interim/site_scope_review.csv`
+Его лучше показывать как дополнительный экспериментальный слой.
 
-- Purpose: reviewed site-scope manifest used downstream without silent filtering.
-- Current scope marks the 9 map/source-document sites as `in_project_scope=true`.
-- `suvodskaya` remains in metadata but is explicitly marked outside the current project scope.
+Почему он остаётся в `data/processed/`:
+- на него есть код и тесты;
+- он документирован в проекте;
+- он может быть полезен как демонстрация аккуратного обогащения с явным provenance;
+- он не ломает основной итоговый слой, потому что существует отдельно.
 
-### `data/interim/water_levels_manual_dictionary.md`
+Какие колонки в нём особенно важно трактовать как технические коды:
+- `wind_fill_status`
+- `wind_fill_source`
+- `wind_fill_source_tier`
+- `wind_fill_method`
+- `wind_fill_confidence`
+- `water_fill_status`
+- `water_fill_source`
+- `water_fill_source_tier`
+- `water_fill_method`
+- `water_fill_confidence`
 
-- Purpose: manual decoding checklist for ambiguous water-level columns.
+Человекочитаемые пояснения в этом дополнительном слое находятся прежде всего в:
+- `qc_note_analysis_safe`
+- `wind_fill_validation_note`
+- `water_fill_validation_note`
 
-### `data/interim/wind_coverage_by_interval.csv`
+## Какие таблицы не стоит показывать как главные
 
-- Purpose: interval-level manifest of `n_wind_obs`, `coverage_wind`, and a transparent coverage flag.
+Не стоит показывать преподавателю как главные итоговые таблицы:
 
-### `data/interim/qc_summary.json`
+- `wind_obs_hourly.csv` — это технический исходно-производный слой наблюдений погоды.
+- `water_levels_raw.csv` — это join-слой годового гидрологического контекста.
+- `base_points_history.csv` — это таблица с подробным provenance-слоем и случаями ручной проверки.
+- `final_dataset_enriched_open_sources.csv` — это дополнительный слой для экспериментального enrichment, а не основной итоговый датасет.
 
-- Purpose: machine-readable QC summary across processed CSV outputs.
+## Что безопасно анализировать сейчас
 
-## Reports
+- Описательную структуру участков и профилей.
+- Интервальные метрики смещения бровки.
+- Беззнаковую интенсивность изменения (`retreat_abs_m`, `retreat_rate_abs_m_per_year`).
+- Внутриучастковые связи профилей на полностью сопоставимых интервалах.
+- Годовой водный контекст только как ограниченный сопровождающий фон, а не как локальный причинный ряд.
 
-### `reports/tables/qc_summary.md`
+Это соответствует текущему первому аналитическому этапу: временная структура наблюдений, интервальные изменения и корреляционная согласованность профилей внутри участков.
 
-- Purpose: human-readable QC summary with duplicate checks and missingness tables.
+## Что пока нельзя интерпретировать жёстко
 
-### `reports/tables/base_points_manual_review.csv`
+- Ветер как устойчивый причинный фактор там, где доминирует `LOW_COVERAGE_WIND`.
+- Воду как локальный датированный forcing-фактор: текущий слой остаётся year-only контекстом по нижнему участку.
+- Любую автоматическую трактовку знака `retreat_m` как готовой физической категории без проверки полевой конвенции.
+- Геодезически чувствительные выводы без учёта `review_reason` и ручной проверки базисных точек.
 
-- Purpose: filtered manifest of all base-point rows that still require manual review.
+## Interim и reports
+
+Ключевые промежуточные файлы:
+
+- `data/interim/shoreline_duplicate_report.csv`
+- `data/interim/site_scope_review.csv`
+- `data/interim/wind_coverage_by_interval.csv`
+- `data/interim/water_levels_profile.json`
+- `data/interim/water_levels_manual_dictionary.md`
+- `data/interim/qc_summary.json`
+
+Ключевые отчёты:
+
+- `reports/tables/qc_summary.md`
+- `reports/tables/data_codebook_ru.md`
+- `reports/tables/processed_table_inventory.md`
+- `reports/tables/russian_text_audit.md`
+
+Для первого аналитического этапа также важны:
+
+- `reports/tables/01_periods_summary.csv`
+- `reports/tables/02_profile_correlation_summary.csv`
+- `reports/tables/02_profile_correlation_presentation.csv`
+- `reports/figures/01_site_interval_timelines_presentation.png`
+- `reports/figures/01_retreat_distributions_composite.png`
+- `reports/figures/02_profile_correlation_overview.png`
+
+Для нейросетевого демонстрационного поиска подозрительных наблюдений также важны:
+
+- `reports/tables/autoencoder_anomaly_scores.csv`
+- `reports/tables/autoencoder_top_anomalies.csv`
+- `reports/tables/autoencoder_anomaly_summary.md`
+- `reports/figures/04_autoencoder_reconstruction_error.png`
+- `reports/figures/04_autoencoder_top_anomalies.png`

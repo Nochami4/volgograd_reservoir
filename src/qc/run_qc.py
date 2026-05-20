@@ -12,6 +12,7 @@ from src.parsers.common import INTERIM_DIR, MAX_REASONABLE_WIND_YEAR, MIN_REASON
 
 KEY_COLUMNS = {
     "analysis_ready.csv": ["interval_id"],
+    "final_dataset_for_modeling.csv": ["interval_id"],
     "base_points.csv": ["base_point_id"],
     "interval_metrics.csv": ["interval_id"],
     "profiles.csv": ["profile_id"],
@@ -52,7 +53,7 @@ def qc_for_file(path: Path) -> dict[str, object]:
             {
                 "name": "wind_year_out_of_range",
                 "count": int(bad_year_mask.sum()),
-                "details": f"Accepted range: {MIN_REASONABLE_WIND_YEAR}..{MAX_REASONABLE_WIND_YEAR}.",
+                "details": f"Допустимый диапазон: {MIN_REASONABLE_WIND_YEAR}..{MAX_REASONABLE_WIND_YEAR}.",
             }
         )
         mandatory_dt_mask = year_numeric.notna() & pd.to_numeric(df["hour"], errors="coerce").notna() & df["obs_datetime"].isna()
@@ -60,28 +61,28 @@ def qc_for_file(path: Path) -> dict[str, object]:
             {
                 "name": "missing_obs_datetime_when_date_and_hour_present",
                 "count": int(mandatory_dt_mask.sum()),
-                "details": "Rows with parsed year and hour should carry obs_datetime unless flagged invalid upstream.",
+                "details": "Строки с распознанными годом и часом должны иметь `obs_datetime`, если только они не были помечены как недопустимые выше по пайплайну.",
             }
         )
         if int(bad_year_mask.sum()) > 0:
-            blockers.append("Wind layer still contains years outside the accepted range.")
+            blockers.append("В ветровом слое всё ещё есть годы вне допустимого диапазона.")
 
     if path.name == "base_points.csv":
         extra_checks.append(
             {
                 "name": "base_points_empty",
                 "count": int(len(df) == 0),
-                "details": "An empty base_points layer means shoreline geometry remains only partially anchored.",
+                "details": "Пустой слой `base_points` означает, что береговая геометрия остаётся привязанной лишь частично.",
             }
         )
         if len(df) == 0:
-            blockers.append("base_points.csv is empty.")
+            blockers.append("`base_points.csv` пуст.")
         unresolved_site_share = float(df["site_id"].isna().mean()) if len(df) else 1.0
         extra_checks.append(
             {
                 "name": "base_points_missing_site_id_share",
                 "count": None,
-                "details": f"Share of base-point rows without resolved site_id: {unresolved_site_share:.3f}.",
+                "details": f"Доля строк базисных точек без определённого `site_id`: {unresolved_site_share:.3f}.",
             }
         )
         status_distribution = df["point_status"].fillna("missing").value_counts(dropna=False).to_dict() if "point_status" in df.columns else {}
@@ -89,31 +90,39 @@ def qc_for_file(path: Path) -> dict[str, object]:
             {
                 "name": "base_points_point_status_distribution",
                 "count": None,
-                "details": f"Point-status distribution: {status_distribution}.",
+                "details": f"Распределение `point_status`: {status_distribution}.",
             }
         )
         if unresolved_site_share > 0:
-            blockers.append("Some base points still have unresolved site_id and require manual review.")
+            blockers.append("Часть базисных точек всё ещё не имеет определённого `site_id` и требует ручной проверки.")
 
     if path.name == "water_levels_raw.csv" and not df.empty:
-        ambiguous_share = float(df["qc_flag"].fillna("").str.contains("AMBIGUOUS_LEVEL_COLUMNS", regex=False).mean())
+        missing_mean_share = float(df["water_level_mean_annual_m_abs"].isna().mean()) if "water_level_mean_annual_m_abs" in df.columns else 1.0
+        missing_max_share = float(df["water_level_max_annual_m_abs"].isna().mean()) if "water_level_max_annual_m_abs" in df.columns else 1.0
         year_only_share = float(df["obs_date"].isna().mean()) if "obs_date" in df.columns else 1.0
         extra_checks.append(
             {
-                "name": "ambiguous_level_columns_share",
+                "name": "water_mean_level_missing_share",
                 "count": None,
-                "details": f"Share of rows with ambiguous neutral level columns: {ambiguous_share:.3f}.",
+                "details": f"Доля строк без восстановленного среднего годового уровня воды для нижнего участка: {missing_mean_share:.3f}.",
+            }
+        )
+        extra_checks.append(
+            {
+                "name": "water_max_level_missing_share",
+                "count": None,
+                "details": f"Доля строк без восстановленного максимального годового уровня воды для нижнего участка: {missing_max_share:.3f}.",
             }
         )
         extra_checks.append(
             {
                 "name": "water_rows_without_full_date_share",
                 "count": None,
-                "details": f"Share of water rows without full obs_date: {year_only_share:.3f}.",
+                "details": f"Доля строк воды без полной `obs_date`: {year_only_share:.3f}.",
             }
         )
-        if ambiguous_share > 0:
-            blockers.append("Water level columns remain semantically ambiguous; only neutral technical aggregation is currently safe.")
+        if missing_mean_share > 0 or missing_max_share > 0:
+            blockers.append("В восстановленном ряду уровней воды по нижнему участку всё ещё есть пропуски годовых значений.")
 
     if path.name == "analysis_ready.csv" and not df.empty:
         low_wind_share = float(df["qc_flag_analysis"].fillna("").str.contains("LOW_COVERAGE_WIND", regex=False).mean())
@@ -124,32 +133,44 @@ def qc_for_file(path: Path) -> dict[str, object]:
             {
                 "name": "analysis_low_coverage_wind_share",
                 "count": None,
-                "details": f"Share of intervals flagged LOW_COVERAGE_WIND: {low_wind_share:.3f}.",
+                "details": f"Доля интервалов с флагом `LOW_COVERAGE_WIND`: {low_wind_share:.3f}.",
             }
         )
         extra_checks.append(
             {
                 "name": "analysis_low_coverage_water_share",
                 "count": None,
-                "details": f"Share of intervals flagged LOW_COVERAGE_WATER: {low_water_share:.3f}.",
+                "details": f"Доля интервалов с флагом `LOW_COVERAGE_WATER`: {low_water_share:.3f}.",
             }
         )
         extra_checks.append(
             {
                 "name": "analysis_intervals_with_any_wind",
                 "count": any_wind,
-                "details": "Intervals with coverage_wind > 0.",
+                "details": "Интервалы, где `coverage_wind > 0`.",
             }
         )
         extra_checks.append(
             {
                 "name": "analysis_intervals_with_adequate_wind",
                 "count": adequate_wind,
-                "details": "Intervals with coverage_wind >= 0.8.",
+                "details": "Интервалы, где `coverage_wind >= 0.8`.",
             }
         )
         if low_wind_share > 0.5:
-            blockers.append("Wind coverage is below the 0.8 threshold for many shoreline intervals.")
+            blockers.append("Для многих береговых интервалов покрытие ветром остаётся ниже порога 0.8.")
+
+    if path.name == "final_dataset_for_modeling.csv" and not df.empty:
+        all_empty_columns = [column for column in df.columns if df[column].isna().all()]
+        extra_checks.append(
+            {
+                "name": "final_dataset_all_empty_columns",
+                "count": len(all_empty_columns),
+                "details": f"Полностью пустые колонки: {all_empty_columns if all_empty_columns else 'нет'}.",
+            }
+        )
+        if all_empty_columns:
+            blockers.append("В `final_dataset_for_modeling.csv` всё ещё есть полностью пустые колонки.")
 
     if path.name == "shoreline_observations.csv" and not df.empty:
         duplicate_report = load_duplicate_report()
@@ -158,12 +179,12 @@ def qc_for_file(path: Path) -> dict[str, object]:
                 {
                     "name": "shoreline_duplicate_groups",
                     "count": int(len(duplicate_report)),
-                    "details": "Duplicate observation keys are described in data/interim/shoreline_duplicate_report.csv.",
+                    "details": "Группы дублирующихся ключей наблюдений описаны в `data/interim/shoreline_duplicate_report.csv`.",
                 }
             )
             conflicting = int((~duplicate_report["is_full_duplicate"].fillna(False)).sum())
             if conflicting > 0:
-                blockers.append("Some shoreline observation keys remain conflicting and require manual review.")
+                blockers.append("Часть ключей береговых наблюдений остаётся конфликтующей и требует ручной проверки.")
 
     return {
         "file": relative_to_root(path),
@@ -196,87 +217,91 @@ def build_markdown_report(results: list[dict[str, object]]) -> str:
     duplicate_report = load_duplicate_report()
 
     lines = [
-        "# QC Summary",
+        "# Сводка QC",
         "",
-        "## Critical blockers before scientific analysis",
+        "## Критические ограничения перед научной интерпретацией",
         "",
     ]
     if all_blockers:
         for file_name, blocker in all_blockers:
             lines.append(f"- `{file_name}`: {blocker}")
     else:
-        lines.append("- No critical blockers detected by automated QC.")
+        lines.append("- Автоматический QC не выявил критических блокирующих проблем.")
 
-    lines.extend(["", "## Why tasks 3/5/6 are not analysis-safe yet", ""])
+    lines.extend(["", "## Почему задачи 3/5/6 пока не считаются аналитически безопасными", ""])
     if analysis_df.empty:
-        lines.append("- `analysis_ready.csv` is empty, so downstream task safety cannot be assessed.")
+        lines.append("- `analysis_ready.csv` пуст, поэтому безопасность последующих аналитических задач оценить нельзя.")
     else:
         coverage = pd.to_numeric(analysis_df["coverage_wind"], errors="coerce")
-        lines.append(f"- Intervals with `coverage_wind >= 0.8`: {int((coverage >= 0.8).sum())}")
-        lines.append(f"- Intervals with `coverage_wind > 0`: {int((coverage > 0).sum())}")
+        lines.append(f"- Интервалы с `coverage_wind >= 0.8`: {int((coverage >= 0.8).sum())}")
+        lines.append(f"- Интервалы с `coverage_wind > 0`: {int((coverage > 0).sum())}")
         if not wind_df.empty and "year" in wind_df.columns:
             year_values = sorted({int(value) for value in pd.to_numeric(wind_df["year"], errors='coerce').dropna().astype(int)})
-            lines.append(f"- Wind years currently present in `wind_obs_hourly.csv`: {year_values}")
-        lines.append("- Task families that rely on interval-level wind forcing remain draft until the wind time series is extended or matched to intervals more completely.")
+            lines.append(f"- Годы ветровых наблюдений, которые сейчас есть в `wind_obs_hourly.csv`: {year_values}")
+        lines.append("- Семейства задач, опирающиеся на интервальный ветер как на фактор, пока остаются черновыми, пока временной ряд не будет расширен или лучше сопоставлен с интервалами.")
 
-    lines.extend(["", "## Dataset-specific Diagnostics", ""])
+    lines.extend(["", "## Диагностика по наборам данных", ""])
     if not base_df.empty:
         unresolved = int(base_df["site_id"].isna().sum()) if "site_id" in base_df.columns else len(base_df)
         status_distribution = base_df["point_status"].fillna("missing").value_counts(dropna=False).to_dict()
-        lines.append(f"- `base_points.csv`: {len(base_df)} rows; unresolved `site_id`: {unresolved}; point_status distribution: {status_distribution}.")
+        lines.append(f"- `base_points.csv`: {len(base_df)} строк; неразрешённых `site_id`: {unresolved}; распределение `point_status`: {status_distribution}.")
     else:
-        lines.append("- `base_points.csv`: empty.")
+        lines.append("- `base_points.csv`: пуст.")
 
     if not water_df.empty:
-        ambiguous_share = float(water_df["qc_flag"].fillna("").str.contains("AMBIGUOUS_LEVEL_COLUMNS", regex=False).mean())
+        missing_mean_share = float(water_df["water_level_mean_annual_m_abs"].isna().mean()) if "water_level_mean_annual_m_abs" in water_df.columns else 1.0
+        missing_max_share = float(water_df["water_level_max_annual_m_abs"].isna().mean()) if "water_level_max_annual_m_abs" in water_df.columns else 1.0
         no_date_share = float(water_df["obs_date"].isna().mean()) if "obs_date" in water_df.columns else 1.0
         available_sites = set(water_df["site_id"].dropna().astype(str))
         missing_sites = sorted(set(sites_df["site_id"].dropna().astype(str)) - available_sites) if not sites_df.empty else []
-        lines.append(f"- `water_levels_raw.csv`: ambiguous neutral columns share = {ambiguous_share:.3f}; rows without full date = {no_date_share:.3f}.")
-        lines.append(f"- Sites without any extracted water rows: {missing_sites if missing_sites else 'none'}.")
+        lines.append(
+            f"- `water_levels_raw.csv`: доля пропусков в восстановленных средних/максимальных годовых уровнях нижнего участка = {missing_mean_share:.3f}/{missing_max_share:.3f}; строк без полной даты = {no_date_share:.3f}."
+        )
+        lines.append("- Уровни воды теперь явно расшифрованы как средние и максимальные годовые значения по нижнему участку, но всё ещё остаются годовым контекстом без полной даты наблюдения.")
+        lines.append(f"- Участки без каких-либо извлечённых строк воды: {missing_sites if missing_sites else 'нет'}.")
 
     if not duplicate_report.empty:
         lines.append(
-            f"- `shoreline_duplicate_report.csv`: {len(duplicate_report)} duplicate key group(s), including {int((~duplicate_report['is_full_duplicate'].fillna(False)).sum())} conflicting group(s)."
+            f"- `shoreline_duplicate_report.csv`: {len(duplicate_report)} групп дублирующихся ключей, включая {int((~duplicate_report['is_full_duplicate'].fillna(False)).sum())} конфликтующих групп(ы)."
         )
 
     if not scope_df.empty and "scope_status" in scope_df.columns:
         needs_review = scope_df["scope_status"].fillna("needs_review").eq("needs_review").sum()
-        lines.append(f"- `site_scope_review.csv`: {int(needs_review)} site(s) still marked `needs_review`.")
+        lines.append(f"- `site_scope_review.csv`: {int(needs_review)} участок(ов) всё ещё помечен(о) как `needs_review`.")
 
     lines.extend(
         [
             "",
-            "| File | Rows | Columns | Duplicate rows | Duplicate keys | Key columns |",
+            "| Файл | Строк | Колонок | Дубли строк | Дубли ключей | Ключевые колонки |",
             "| --- | ---: | ---: | ---: | ---: | --- |",
         ]
     )
     for result in results:
         lines.append(
             f"| `{result['file']}` | {result['rows']} | {result['columns']} | {result['duplicate_rows']} | "
-            f"{result['duplicate_keys'] if result['duplicate_keys'] is not None else 'n/a'} | "
-            f"{', '.join(result['key_columns']) if result['key_columns'] else 'n/a'} |"
+            f"{result['duplicate_keys'] if result['duplicate_keys'] is not None else 'н/д'} | "
+            f"{', '.join(result['key_columns']) if result['key_columns'] else 'н/д'} |"
         )
 
-    lines.extend(["", "## Additional Targeted Checks", ""])
+    lines.extend(["", "## Дополнительные адресные проверки", ""])
     for result in results:
         if not result["extra_checks"]:
             continue
         lines.append(f"### `{result['file']}`")
         lines.append("")
         for check in result["extra_checks"]:
-            rendered_count = check["count"] if check["count"] is not None else "n/a"
+            rendered_count = check["count"] if check["count"] is not None else "н/д"
             lines.append(f"- `{check['name']}`: {rendered_count}. {check['details']}")
         lines.append("")
 
-    lines.extend(["## Missingness By Column", ""])
+    lines.extend(["## Пропуски по колонкам", ""])
     for result in results:
         lines.append(f"### `{result['file']}`")
         lines.append("")
-        lines.append("| Column | Missing share |")
+        lines.append("| Колонка | Доля пропусков |")
         lines.append("| --- | ---: |")
         for column, share in sorted(result["missing_share"].items()):
-            rendered = f"{share:.3f}" if share is not None else "n/a"
+            rendered = f"{share:.3f}" if share is not None else "н/д"
             lines.append(f"| `{column}` | {rendered} |")
         lines.append("")
 
@@ -295,14 +320,14 @@ def build_markdown_report(results: list[dict[str, object]]) -> str:
         suspicious_sheets = {sheet: count for sheet, count in sheet_distribution.items() if count < 24}
         lines.extend(
             [
-                "## Wind Diagnostics",
+                "## Диагностика ветрового слоя",
                 "",
-                f"- Valid wind observations: {int(wind_df['obs_datetime'].notna().sum())}",
-                f"- Rows flagged invalid datetime: {int(wind_df['qc_flag'].fillna('').str.contains('invalid_datetime', case=False, regex=False).sum())}",
-                f"- Year distribution: {year_distribution}",
-                f"- Source-sheet distribution: {sheet_distribution}",
-                f"- Years outside {MIN_REASONABLE_WIND_YEAR}..{MAX_REASONABLE_WIND_YEAR}: {bad_years if bad_years else 'none'}",
-                f"- Sheets with suspiciously few rows (<24): {suspicious_sheets if suspicious_sheets else 'none'}",
+                f"- Корректных ветровых наблюдений с `obs_datetime`: {int(wind_df['obs_datetime'].notna().sum())}",
+                f"- Строк с флагом `invalid_datetime`: {int(wind_df['qc_flag'].fillna('').str.contains('invalid_datetime', case=False, regex=False).sum())}",
+                f"- Распределение по годам: {year_distribution}",
+                f"- Распределение по исходным листам: {sheet_distribution}",
+                f"- Годы вне диапазона {MIN_REASONABLE_WIND_YEAR}..{MAX_REASONABLE_WIND_YEAR}: {bad_years if bad_years else 'нет'}",
+                f"- Листы с подозрительно малым числом строк (<24): {suspicious_sheets if suspicious_sheets else 'нет'}",
                 "",
             ]
         )

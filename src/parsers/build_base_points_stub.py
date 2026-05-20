@@ -21,6 +21,14 @@ from .common import (
     safe_parse_date,
     setup_logging,
 )
+from src.qc_messages import (
+    BASE_POINT_REVIEW_REASON_COORD_CONFLICT,
+    BASE_POINT_REVIEW_REASON_COORD_INCOMPLETE,
+    BASE_POINT_REVIEW_REASON_DATE,
+    BASE_POINT_REVIEW_REASON_LABEL_TRUNCATED,
+    BASE_POINT_REVIEW_REASON_SITE_UNRESOLVED,
+    BASE_POINT_REVIEW_REASON_URAKOV_CLUSTER,
+)
 
 DOC_PATH = RAW_DIR / "docs" / "GPS-координаты пунктов базиса с дополнениями Барановой 2024 г..doc"
 SOURCE_FILE = relative_to_root(DOC_PATH)
@@ -78,7 +86,7 @@ SPECIAL_CASES = [
         "x_m": "0543709",
         "accuracy_m": None,
         "note_raw": "Координаты извлечены из блока без явной подписи точки; в проектном контексте соответствуют точке 3 участка Ураков Бугор.",
-        "review_reason": "Coordinate assignment inferred from the document block and conflicts with the known Nizhniy Urakov point-3 coordinate cluster.",
+        "review_reason": BASE_POINT_REVIEW_REASON_COORD_CONFLICT,
         "source_row_ref": "strings_el:229",
     }
 ]
@@ -386,15 +394,15 @@ def enrich_history(history: pd.DataFrame) -> pd.DataFrame:
     for _, row in history.iterrows():
         reasons: list[str] = []
         if not clean_text(row["site_id"]):
-            reasons.append("site_id unresolved")
+            reasons.append(BASE_POINT_REVIEW_REASON_SITE_UNRESOLVED)
         if row["has_uncertain_date"]:
-            reasons.append("date missing or partial in source")
+            reasons.append(BASE_POINT_REVIEW_REASON_DATE)
         if clean_text(row["base_point_name_raw"]).endswith("("):
-            reasons.append("base point label truncated in extracted text")
+            reasons.append(BASE_POINT_REVIEW_REASON_LABEL_TRUNCATED)
         if pd.isna(row["y_m"]) or pd.isna(row["x_m"]):
-            reasons.append("coordinate pair incomplete")
+            reasons.append(BASE_POINT_REVIEW_REASON_COORD_INCOMPLETE)
         if clean_text(row["source_row_ref"]) == "strings_el:229":
-            reasons.append("Urakov Bugor point 3 on 2019-08-14 matches the suspicious Nizhniy Urakov point-3 coordinate cluster")
+            reasons.append(BASE_POINT_REVIEW_REASON_URAKOV_CLUSTER)
         review_reasons.append("; ".join(dict.fromkeys(reasons)) if reasons else None)
     history["review_reason"] = history["review_reason"].combine_first(pd.Series(review_reasons, index=history.index))
     history["needs_manual_review"] = history["review_reason"].notna()

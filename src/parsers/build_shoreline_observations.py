@@ -19,6 +19,7 @@ from .common import (
     safe_parse_date,
     setup_logging,
 )
+from src.qc_messages import shoreline_duplicate_obs_key_note
 from .profile_workbook import block_row_to_numeric_fields, iter_block_rows
 
 OUTPUT_COLUMNS = [
@@ -217,7 +218,7 @@ def build_shoreline_observations(output_path: Path | None = None) -> Path:
                         part
                         for part in [
                             value,
-                            "This row shares the same (site_id, profile_id, obs_date) key with another shoreline row; see data/interim/shoreline_duplicate_report.csv.",
+                            shoreline_duplicate_obs_key_note(),
                         ]
                         if part
                     ]

@@ -1,83 +1,16 @@
 [
   {
-    "sheet_name": "Нижний Ураков",
-    "rows_scanned": 52,
+    "source_file": "data/raw/Уровни ВДХР 1986-2018.xlsx",
+    "source_sheet": "Данные по участкам",
+    "rows_scanned": 88,
     "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 48,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Нижний Балыклей",
-    "rows_scanned": 54,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 51,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Бережновка",
-    "rows_scanned": 51,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 49,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Бурты",
-    "rows_scanned": 55,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 52,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Пролейский",
-    "rows_scanned": 96,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 58,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Молчановка",
-    "rows_scanned": 54,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 51,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Пичуга-Южный",
-    "rows_scanned": 40,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 37,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Ураков Бугор",
-    "rows_scanned": 48,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 45,
-    "preferred_level_col": "level_col_1_m"
-  },
-  {
-    "sheet_name": "Новоникольское",
-    "rows_scanned": 47,
-    "recognized_years": 33,
-    "rows_with_1_numeric_col": 0,
-    "rows_with_2_numeric_cols": 33,
-    "problem_rows": 45,
-    "preferred_level_col": "level_col_1_m"
+    "year_min": 1986,
+    "year_max": 2018,
+    "site_count": 10,
+    "year_column": 2,
+    "mean_column": 7,
+    "max_column": 8,
+    "water_section_id": "lower_section",
+    "water_section_name": "Нижний участок (озерный)"
   }
 ]

@@ -1,0 +1,10 @@
+site_id,site_name,n_profiles,overlap_range,mean_pearson_retreat_rate_m_per_year,mean_spearman_retreat_rate_m_per_year,profile_agreement_summary,has_duplicate_conflict_context
+berezhnovka,Бережновка,3,21–23,0.1506271080917029,0.5173724825898739,weak,False
+burty,Бурты,3,22–24,0.5072339207895463,0.5312478825522304,moderate,False
+molchanovka,Молчановка,3,21–23,0.6829691903011105,0.45982495765104464,moderate,False
+nizhniy_balykley,Нижний Балыклей,3,17–21,0.10287522971393996,0.5654763021636087,weak,False
+nizhniy_urakov,Нижний Ураков,4,13–18,0.1815651668867954,0.18093716645056412,weak,False
+novonikolskoe,Новоникольское,3,11–16,0.9982152936284788,0.8379875026933852,very_high,False
+pichuga_yuzhny,Пичуга-Южный,3,4–8,0.3752909745574525,0.5428571428571428,weak_but_limited_overlap,False
+proleyskiy,Пролейский,3,13–22,0.3308656850162673,0.5104017258589444,weak,False
+urakov_bugor,Ураков Бугор,3,9–19,-0.06607039495160505,0.2027145144913541,weak,True

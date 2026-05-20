@@ -1,11 +1,11 @@
 site_id,site_name,in_project_scope,scope_status,scope_note
-proleyskiy,Пролейский,True,reviewed,Listed on the project map and in the source-document scope.
-burty,Бурты,True,reviewed,Listed on the project map and in the source-document scope.
-berezhnovka,Бережновка,True,reviewed,Listed on the project map and in the source-document scope.
-molchanovka,Молчановка,True,reviewed,Listed on the project map as Молчановский and matched to site Молчановка.
-nizhniy_urakov,Нижний Ураков,True,reviewed,Listed on the project map and in the source-document scope.
-urakov_bugor,Ураков Бугор,True,reviewed,Listed on the project map and in the source-document scope.
-pichuga_yuzhny,Пичуга-Южный,True,reviewed,Listed on the project map and in the source-document scope.
-novonikolskoe,Новоникольское,True,reviewed,Listed on the project map and in the source-document scope.
-nizhniy_balykley,Нижний Балыклей,True,reviewed,Listed on the project map and in the source-document scope.
-suvodskaya,Суводская,False,reviewed,Present in the metadata workbook but not listed among the nine scoped map/source-document sites.
+proleyskiy,Пролейский,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+burty,Бурты,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+berezhnovka,Бережновка,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+molchanovka,Молчановка,True,reviewed,На проектной карте участок указан как «Молчановский» и сопоставлен с участком «Молчановка».
+nizhniy_urakov,Нижний Ураков,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+urakov_bugor,Ураков Бугор,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+pichuga_yuzhny,Пичуга-Южный,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+novonikolskoe,Новоникольское,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+nizhniy_balykley,Нижний Балыклей,True,reviewed,Участок указан на проектной карте и в исходных документах по составу исследования.
+suvodskaya,Суводская,False,reviewed,"Участок есть в книге метаданных, но не входит в девять участков, подтверждённых картой и исходными документами."
