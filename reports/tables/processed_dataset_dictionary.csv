@@ -1,0 +1,122 @@
+table_name,column_name,description_ru,role,notes_ru
+sites.csv,site_id,Стабильный идентификатор берегового участка,identifier,Ключ для связей с профилями и производными таблицами
+sites.csv,site_name,Человекочитаемое название участка,metadata,Используется в таблицах и на графиках
+sites.csv,shore_type,Тип берега по исходному описанию,metadata,Описательный контекст участка
+sites.csv,shore_orientation_text,Текстовое описание ориентации берега,metadata,Удобно для чтения человеком
+sites.csv,shore_orientation_deg,Ориентация берега в градусах,measurement,Числовой вариант для анализа
+sites.csv,lithology_text,Текстовое описание литологии,metadata,Показывает геологический контекст участка
+sites.csv,source_file,Исходный файл с метаданными участка,source,Поле provenance
+profiles.csv,profile_id,Стабильный идентификатор профиля,identifier,Ключ для связей с наблюдениями и интервалами
+profiles.csv,site_id,Идентификатор участка владельца профиля,identifier,Связь с таблицей участков
+profiles.csv,profile_num,Номер профиля в исходных материалах,metadata,Может быть пустым в отдельных случаях
+profiles.csv,profile_name,Название профиля,metadata,Используется в таблицах и на графиках
+profiles.csv,start_date,Дата первого наблюдения по профилю,date,Показывает начало временного ряда
+profiles.csv,end_date,Дата последнего наблюдения по профилю,date,Показывает конец временного ряда
+profiles.csv,n_observations,Число наблюдений в профиле,metric,Удобно для общей характеристики покрытия
+shoreline_observations.csv,obs_id,Стабильный идентификатор берегового наблюдения,identifier,Основной ключ построчного слоя
+shoreline_observations.csv,site_id,Идентификатор участка наблюдения,identifier,Связь с участком
+shoreline_observations.csv,profile_id,Идентификатор профиля наблюдения,identifier,Связь с профилем
+shoreline_observations.csv,obs_date,Дата наблюдения,date,Основа для построения интервалов
+shoreline_observations.csv,measured_point_name,Обозначение измеренной точки в исходной таблице,metadata,Сохраняется для сопоставления с источником
+shoreline_observations.csv,raw_measured_distance_m,Исходное измеренное расстояние в метрах,measurement,Число сохраняется без ручной импутации
+shoreline_observations.csv,brow_position_pn_m,Положение береговой бровки в нормированной профильной системе,measurement,На этой координате строятся интервальные метрики
+shoreline_observations.csv,is_missing,Признак отсутствующего значения,qc,Не скрывает пропуски raw-данных
+shoreline_observations.csv,qc_flag,Машинный QC-код на уровне наблюдения,qc,Для чтения человеком нужен столбец qc_note
+shoreline_observations.csv,qc_note,Русское пояснение ограничения или замечания,qc,Показывает проблему без расшифровки кода
+shoreline_observations.csv,source_file,Исходный файл наблюдения,source,Поле provenance
+shoreline_observations.csv,source_row,Номер строки в источнике,source,Полезно при ручной проверке
+interval_metrics.csv,interval_id,Стабильный идентификатор интервала между соседними наблюдениями,identifier,Основной ключ интервального слоя
+interval_metrics.csv,site_id,Идентификатор участка интервала,identifier,Связь с участком
+interval_metrics.csv,profile_id,Идентификатор профиля интервала,identifier,Связь с профилем
+interval_metrics.csv,date_start,Дата начала интервала,date,Левая граница интервала
+interval_metrics.csv,date_end,Дата конца интервала,date,Правая граница интервала
+interval_metrics.csv,years_between,Длина интервала в годах,metric,Используется для расчёта скоростей
+interval_metrics.csv,retreat_m,Знаковое смещение береговой бровки за интервал,measurement,Знак требует осторожной доменной интерпретации
+interval_metrics.csv,retreat_rate_m_per_year,Знаковая скорость смещения в м/год,metric,Используется в корреляционном анализе профилей
+interval_metrics.csv,retreat_abs_m,Абсолютная величина смещения за интервал,metric,Удобна для межучасткового сравнения интенсивности
+interval_metrics.csv,retreat_rate_abs_m_per_year,Абсолютная интенсивность смещения в м/год,metric,Беззнаковая метрика первого этапа
+interval_metrics.csv,qc_flag,Машинный QC-код интервала,qc,Служебный код без перевода в колонке
+interval_metrics.csv,qc_note,Русское пояснение к QC интервала,qc,Нужно для чтения человеком
+analysis_ready.csv,interval_id,Идентификатор интервала после объединения с контекстом,identifier,Ключ полной draft-таблицы
+analysis_ready.csv,site_name,Название участка,metadata,Используется в отчётах и графиках
+analysis_ready.csv,n_wind_obs,Число ветровых наблюдений,metric,Показывает покрытие внешнего контекста
+analysis_ready.csv,coverage_wind,Доля покрытия интервала данными ветра,metric,Для многих строк остаётся низкой
+analysis_ready.csv,n_water_obs,Число водных наблюдений,metric,Показывает наличие годового гидрологического контекста
+analysis_ready.csv,coverage_water,Доля покрытия интервала водным контекстом,metric,Не означает локальный датированный ряд
+analysis_ready.csv,mean_water_level_mean_annual_m_abs,Средний годовой уровень воды по интервалу,measurement,Это агрегированный годовой контекст
+analysis_ready.csv,water_time_resolution,Временное разрешение водного слоя,metadata,Сейчас ключевое значение year_only
+analysis_ready.csv,water_context_scope,Пространственный контекст водного слоя,metadata,Показывает что ряд не локален для каждого участка
+analysis_ready.csv,scope_status,Статус включения участка в подтверждённый scope,metadata,Нужен для проектной фильтрации
+analysis_ready.csv,qc_flag_analysis,Машинные коды аналитических ограничений,qc,Код остаётся стабильным для кода и тестов
+analysis_ready.csv,qc_note_analysis,Русское объяснение аналитических ограничений,qc,Главный читаемый комментарий в full draft-слое
+analysis_safe_subset.csv,interval_id,Идентификатор интервала в безопасном поднаборе,identifier,Ключ рабочего поднабора для задач 1–2
+analysis_safe_subset.csv,site_name,Название участка,metadata,Используется в показных таблицах и графиках
+analysis_safe_subset.csv,profile_name,Название профиля,metadata,Нужно для внутрисайтового сравнения
+analysis_safe_subset.csv,retreat_m,Знаковое смещение за интервал,measurement,Сохраняется без переосмысления знака
+analysis_safe_subset.csv,retreat_rate_m_per_year,Знаковая скорость смещения,metric,Используется для корреляций профилей
+analysis_safe_subset.csv,retreat_rate_abs_m_per_year,Абсолютная интенсивность смещения,metric,Удобна для безопасного межучасткового сравнения
+analysis_safe_subset.csv,history_start_group,Группа по раннему или позднему старту истории наблюдений,metadata,Используется в первом этапе для временной структуры
+analysis_safe_subset.csv,has_conflicting_shoreline_duplicates,Признак конфликтующих дублей в контексте профиля,qc,Такие случаи не удаляются молча
+analysis_safe_subset.csv,conflicting_duplicate_group_count,Число конфликтующих duplicate-групп,qc,Помогает оценить степень осторожности
+analysis_safe_subset.csv,qc_flag_analysis_safe,Консолидированный машинный QC-код для безопасного слоя,qc,Главный технический QC-код поднабора
+analysis_safe_subset.csv,qc_note_analysis_safe,Русское сводное пояснение ограничений интервала,qc,Главное человекочитаемое поле для показа
+final_dataset_for_modeling.csv,interval_id,Идентификатор интервала в компактном итоговом наборе,identifier,Основной ключ показываемого processed-датасета
+final_dataset_for_modeling.csv,site_name,Название участка,metadata,Нужно для чтения преподавателем
+final_dataset_for_modeling.csv,profile_name,Название профиля,metadata,Позволяет связать строку с профилем
+final_dataset_for_modeling.csv,date_start,Дата начала интервала,date,Остаётся в итоговом наборе
+final_dataset_for_modeling.csv,date_end,Дата конца интервала,date,Остаётся в итоговом наборе
+final_dataset_for_modeling.csv,retreat_rate_abs_m_per_year,Абсолютная интенсивность смещения в м/год,metric,Одна из главных метрик первого этапа
+final_dataset_for_modeling.csv,history_start_group,Группа по старту истории наблюдений,metadata,Удобна для сравнительного анализа
+final_dataset_for_modeling.csv,has_conflicting_shoreline_duplicates,Признак конфликтующего duplicate-контекста,qc,Ограничение не скрывается
+final_dataset_for_modeling.csv,qc_flag_analysis_safe,Консолидированный машинный QC-код,qc,Остаётся для воспроизводимого анализа
+final_dataset_for_modeling.csv,qc_note_analysis_safe,Русское пояснение ограничений строки,qc,Главное читаемое QC-поле итогового набора
+wind_obs_hourly.csv,wind_obs_id,Стабильный идентификатор наблюдения ветра,identifier,Ключ технического метеослоя
+wind_obs_hourly.csv,station_id,Идентификатор метеостанции,identifier,Сейчас важен для provenance
+wind_obs_hourly.csv,obs_datetime,Дата и час наблюдения,date,Основная временная метка
+wind_obs_hourly.csv,obs_date,Дата наблюдения без часа,date,Удобна для агрегаций
+wind_obs_hourly.csv,wind_dir_text,Текстовое направление ветра,metadata,Сохраняется из источника
+wind_obs_hourly.csv,wind_dir_deg,Направление ветра в градусах,measurement,Числовое представление направления
+wind_obs_hourly.csv,wind_speed_ms,Скорость ветра в м/с,measurement,Основная числовая ветровая переменная
+wind_obs_hourly.csv,wind_gust_ms,Порыв ветра в м/с,measurement,Дополнительная числовая переменная
+wind_obs_hourly.csv,qc_flag,Машинный QC-код ветровой записи,qc,Нужен для фильтрации и диагностики
+wind_obs_hourly.csv,source_sheet,Лист исходного файла,source,Поле provenance
+water_levels_raw.csv,water_obs_id,Стабильный идентификатор записи уровня воды,identifier,Ключ гидрологического слоя
+water_levels_raw.csv,site_id,Идентификатор участка для join с интервалами,identifier,Повторяется для удобства объединения
+water_levels_raw.csv,water_section_name,Название гидрологического разреза,metadata,Показывает пространственный контекст источника
+water_levels_raw.csv,year,Год наблюдения,date,Основная временная единица текущего водного слоя
+water_levels_raw.csv,water_level_mean_annual_m_abs,Средний годовой уровень воды,measurement,Не является локальным дневным рядом
+water_levels_raw.csv,water_level_max_annual_m_abs,Максимальный годовой уровень воды,measurement,Используется как ограниченный контекст
+water_levels_raw.csv,is_missing,Признак отсутствующего значения,qc,Не маскирует пробелы источника
+water_levels_raw.csv,qc_flag,Машинный QC-код водной записи,qc,Читается вместе с qc_note
+water_levels_raw.csv,qc_note,Русское пояснение по записи уровня воды,qc,Важно для корректной интерпретации
+base_points_history.csv,site_id,Идентификатор участка базисной точки,identifier,Связь с участком
+base_points_history.csv,base_point_name_norm,Нормализованное имя базисной точки,identifier,Используется для сопоставления вариантов записи
+base_points_history.csv,obs_date,Дата точки из исторического документа,date,Может быть неполной или неопределённой
+base_points_history.csv,y_m,Координата Y в метрах,measurement,Часть геодезического контекста
+base_points_history.csv,x_m,Координата X в метрах,measurement,Часть геодезического контекста
+base_points_history.csv,point_status,Статус точки после нормализации,metadata,Машинный код вроде original или refined
+base_points_history.csv,has_uncertain_date,Признак неопределённой даты,qc,Нужен для осторожной интерпретации
+base_points_history.csv,needs_manual_review,Признак ручной проверки,qc,Показывает спорные случаи
+base_points_history.csv,review_reason,Русское пояснение причины ручной проверки,qc,Главное читаемое поле для спорных точек
+base_points_history.csv,source_row_ref,Ссылка на строку источника,source,Поле provenance для восстановления контекста
+base_points_current.csv,site_id,Идентификатор участка текущей рабочей точки,identifier,Связь с участком
+base_points_current.csv,base_point_name_norm,Нормализованное имя базисной точки,identifier,Ключ для текущего рабочего слоя
+base_points_current.csv,obs_date,Дата принятой версии точки,date,Текущая рабочая дата
+base_points_current.csv,y_m,Координата Y в метрах,measurement,Используется для текущей геопривязки
+base_points_current.csv,x_m,Координата X в метрах,measurement,Используется для текущей геопривязки
+base_points_current.csv,point_status,Статус текущей версии точки,metadata,Сохраняется как технический код
+base_points_current.csv,has_uncertain_date,Признак неопределённой даты,qc,Даже текущая версия может требовать осторожности
+base_points_current.csv,needs_manual_review,Признак ручной проверки,qc,Не скрывает спорные случаи
+base_points_current.csv,review_reason,Русское пояснение спорности,qc,Нужно для чтения человеком
+base_points_current.csv,source_row_ref,Ссылка на строку исходного документа,source,Поле provenance
+base_points.csv,base_point_id,Стабильный идентификатор точки в aliased-слое,identifier,Обратноссовместимый ключ текущего слоя
+base_points.csv,site_id,Идентификатор участка,identifier,Повторяет связь с участком
+base_points.csv,base_point_name_norm,Нормализованное имя точки,identifier,Согласовано с current/history слоями
+base_points.csv,point_status,Статус точки,metadata,Сохраняется как технический код
+base_points.csv,review_reason,Русское пояснение спорности,qc,Нужно при показе сомнительных случаев
+final_dataset_enriched_open_sources.csv,interval_id,Идентификатор интервала в дополнительном enriched-слое,identifier,Совпадает с основным итоговым набором
+final_dataset_enriched_open_sources.csv,n_wind_obs,Число ветровых наблюдений после подключения внешнего контекста,metric,Нужен для оценки полноты обогащения
+final_dataset_enriched_open_sources.csv,wind_fill_status,Статус заполнения ветрового контекста,metadata,Технический код дополнительного слоя
+final_dataset_enriched_open_sources.csv,wind_fill_method,Метод получения ветрового значения,metadata,Важно для прозрачности enrichment
+final_dataset_enriched_open_sources.csv,water_fill_status,Статус заполнения водного контекста,metadata,Технический код дополнительного слоя
+final_dataset_enriched_open_sources.csv,qc_note_analysis_safe,Русское пояснение ограничений строки,qc,Сохраняет читаемый QC-контекст даже в enriched-слое

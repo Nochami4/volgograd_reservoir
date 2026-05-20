@@ -19,6 +19,7 @@ from .common import (
     relative_to_root,
     setup_logging,
 )
+from src.qc_messages import water_missing_value_note, water_shared_context_note, water_year_only_source_note
 
 SOURCE_PATTERN = "Уровни ВДХР*.xlsx"
 SOURCE_SHEET = "Данные по участкам"
@@ -50,22 +51,22 @@ def write_water_levels_dictionary(path: Path, profile_rows: list[dict[str, objec
 
     row = profile_rows[0] if profile_rows else {}
     lines = [
-        "# Water Levels Dictionary",
+        "# Словарь слоя уровней воды",
         "",
-        "This file documents the mechanically extracted water layer used in the current pipeline.",
+        "Этот файл описывает механически извлечённый слой уровней воды, который используется в текущем пайплайне.",
         "",
-        "## Resolved Fields",
+        "## Распознанные поля",
         "",
-        "- `water_level_mean_annual_m_abs`: annual mean water level for the lower reservoir section, meters absolute.",
-        "- `water_level_max_annual_m_abs`: annual maximum water level for the lower reservoir section, meters absolute.",
-        "- `obs_date`: intentionally empty because the source workbook provides annual values by year only.",
+        "- `water_level_mean_annual_m_abs`: средний годовой уровень воды для нижнего участка водохранилища, абсолютные метры.",
+        "- `water_level_max_annual_m_abs`: максимальный годовой уровень воды для нижнего участка водохранилища, абсолютные метры.",
+        "- `obs_date`: намеренно оставляется пустым, потому что исходная книга содержит только годовые значения.",
         f"- `water_section_id`: `{LOWER_SECTION_ID}`.",
         f"- `water_section_name`: `{LOWER_SECTION_NAME}`.",
         "",
-        "## Join Logic",
+        "## Логика присоединения",
         "",
-        "- The lower-section annual series is attached to each shoreline site as shared hydrological context for interval-level joins.",
-        "- This preserves pipeline compatibility without inventing site-local observation dates or local water series.",
+        "- Годовой ряд по нижнему участку присоединяется к каждому береговому участку как общий гидрологический контекст для интервальных соединений.",
+        "- Это сохраняет совместимость пайплайна и не придумывает ни локальные даты наблюдений, ни отдельные локальные ряды уровня воды.",
         "",
     ]
     if row:
@@ -73,12 +74,12 @@ def write_water_levels_dictionary(path: Path, profile_rows: list[dict[str, objec
             [
                 "## Extraction Profile",
                 "",
-                f"- Source workbook: `{row['source_file']}`",
-                f"- Source sheet: `{row['source_sheet']}`",
-                f"- Source rows scanned: {row['rows_scanned']}",
-                f"- Recognized years: {row['recognized_years']}",
-                f"- Year range: {row['year_min']}..{row['year_max']}",
-                f"- Site rows written per year: {row['site_count']}",
+                f"- Исходная книга: `{row['source_file']}`",
+                f"- Исходный лист: `{row['source_sheet']}`",
+                f"- Просканировано строк: {row['rows_scanned']}",
+                f"- Распознано лет: {row['recognized_years']}",
+                f"- Диапазон лет: {row['year_min']}..{row['year_max']}",
+                f"- Число береговых участков, записываемых на каждый год: {row['site_count']}",
                 "",
             ]
         )
@@ -175,12 +176,12 @@ def build_water_levels_raw(output_path: Path | None = None) -> Path:
             "SHARED_LOWER_SECTION_CONTEXT",
         ]
         qc_notes = [
-            "The source workbook provides annual values by year only; no full observation date is available.",
-            "The same lower-section annual series is repeated across shoreline sites as shared hydrological context for interval joins.",
+            water_year_only_source_note(),
+            water_shared_context_note(),
         ]
         if missing_reason is not None:
             qc_flags.append("MISSING_WATER_LEVEL_VALUE")
-            qc_notes.append("At least one resolved lower-section level value is missing in the source row.")
+            qc_notes.append(water_missing_value_note())
 
         for site_row in site_rows:
             records.append(

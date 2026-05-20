@@ -7,6 +7,12 @@ from typing import Any
 
 import pandas as pd
 
+from src.qc_messages import (
+    BASE_POINT_REVIEW_REASON_COORD_CONFLICT,
+    BASE_POINT_REVIEW_REASON_DATE,
+    BASE_POINT_REVIEW_REASON_TRANSLATIONS,
+)
+
 COLUMN_LABELS: dict[str, str] = {
     "site_id": "site_id",
     "site_name": "site_name",
@@ -159,6 +165,10 @@ FLAG_LABELS: dict[str, str] = {
 
 MISSING_REASON_LABELS: dict[str, str] = {
     "all_numeric_fields_missing": "В строке отсутствуют все основные числовые значения.",
+    "wind_direction_and_speed_missing": "Отсутствуют и направление, и скорость ветра.",
+    "both_levels_missing": "В исходной строке отсутствуют и средний, и максимальный уровни воды.",
+    "mean_level_missing": "В исходной строке отсутствует средний уровень воды.",
+    "max_level_missing": "В исходной строке отсутствует максимальный уровень воды.",
 }
 
 VALUE_LABELS_BY_COLUMN: dict[str, dict[str, str]] = {
@@ -269,6 +279,8 @@ def translate_qc_note_text(value: Any) -> str | None:
         return None
 
     translated = text.replace("missing_obs_date", "дата отсутствует")
+    for english, russian in BASE_POINT_REVIEW_REASON_TRANSLATIONS.items():
+        translated = translated.replace(english, russian)
     for pattern, replacement in _NOTE_PATTERNS:
         translated = pattern.sub(replacement, translated)
     return translated
@@ -316,12 +328,12 @@ def humanize_base_point_note(row: pd.Series) -> str | None:
     """Convert internal base-point review markers into a short human note."""
 
     parts: list[str] = []
-    review_reason = clean_optional_text(row.get("review_reason"))
+    review_reason = translate_qc_note_text(row.get("review_reason")) or clean_optional_text(row.get("review_reason"))
     note_raw = clean_optional_text(row.get("note_raw"))
 
-    if parse_boolish(row.get("has_uncertain_date")) or "date missing or partial in source" in review_reason:
+    if parse_boolish(row.get("has_uncertain_date")) or BASE_POINT_REVIEW_REASON_DATE in review_reason:
         parts.append("Дата указана неполностью.")
-    if "Coordinate assignment inferred from the document block" in review_reason:
+    if BASE_POINT_REVIEW_REASON_COORD_CONFLICT in review_reason:
         parts.append(
             "Требуется уточнение привязки точки: координаты были определены по блоку документа и конфликтуют с известным кластером точки 3 участка Нижний Ураков."
         )

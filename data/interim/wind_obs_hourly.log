@@ -28,3 +28,19 @@
 2026-04-17 09:47:12 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
 2026-04-17 12:41:01 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
 2026-04-17 12:41:01 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-04-29 19:51:05 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-04-29 19:51:05 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-04-29 20:27:55 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-04-29 20:27:55 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-04-29 20:34:50 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-04-29 20:34:50 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-05-10 11:22:33 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-05-10 11:22:33 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-05-10 11:49:49 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-05-10 11:49:49 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-05-10 12:28:34 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-05-10 12:28:34 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-05-10 18:00:09 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-05-10 18:00:09 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json
+2026-05-10 18:21:59 | INFO | build_wind_obs_hourly | Built data/processed/wind_obs_hourly.csv with 1596 rows
+2026-05-10 18:21:59 | INFO | build_wind_obs_hourly | Wrote wind parsing log to data/interim/wind_obs_hourly_log.json

@@ -74,26 +74,26 @@
       {
         "name": "analysis_low_coverage_wind_share",
         "count": null,
-        "details": "Share of intervals flagged LOW_COVERAGE_WIND: 1.000."
+        "details": "Доля интервалов с флагом `LOW_COVERAGE_WIND`: 1.000."
       },
       {
         "name": "analysis_low_coverage_water_share",
         "count": null,
-        "details": "Share of intervals flagged LOW_COVERAGE_WATER: 0.283."
+        "details": "Доля интервалов с флагом `LOW_COVERAGE_WATER`: 0.283."
       },
       {
         "name": "analysis_intervals_with_any_wind",
         "count": 101,
-        "details": "Intervals with coverage_wind > 0."
+        "details": "Интервалы, где `coverage_wind > 0`."
       },
       {
         "name": "analysis_intervals_with_adequate_wind",
         "count": 0,
-        "details": "Intervals with coverage_wind >= 0.8."
+        "details": "Интервалы, где `coverage_wind >= 0.8`."
       }
     ],
     "critical_blockers": [
-      "Wind coverage is below the 0.8 threshold for many shoreline intervals."
+      "Для многих береговых интервалов покрытие ветром остаётся ниже порога 0.8."
     ]
   },
   {
@@ -197,17 +197,17 @@
       {
         "name": "base_points_empty",
         "count": 0,
-        "details": "An empty base_points layer means shoreline geometry remains only partially anchored."
+        "details": "Пустой слой `base_points` означает, что береговая геометрия остаётся привязанной лишь частично."
       },
       {
         "name": "base_points_missing_site_id_share",
         "count": null,
-        "details": "Share of base-point rows without resolved site_id: 0.000."
+        "details": "Доля строк базисных точек без определённого `site_id`: 0.000."
       },
       {
         "name": "base_points_point_status_distribution",
         "count": null,
-        "details": "Point-status distribution: {'original': 15, 'refined': 1}."
+        "details": "Распределение `point_status`: {'original': 15, 'refined': 1}."
       }
     ],
     "critical_blockers": []
@@ -395,7 +395,7 @@
       {
         "name": "final_dataset_all_empty_columns",
         "count": 0,
-        "details": "All-empty columns: none."
+        "details": "Полностью пустые колонки: нет."
       }
     ],
     "critical_blockers": []
@@ -488,11 +488,11 @@
       {
         "name": "shoreline_duplicate_groups",
         "count": 3,
-        "details": "Duplicate observation keys are described in data/interim/shoreline_duplicate_report.csv."
+        "details": "Группы дублирующихся ключей наблюдений описаны в `data/interim/shoreline_duplicate_report.csv`."
       }
     ],
     "critical_blockers": [
-      "Some shoreline observation keys remain conflicting and require manual review."
+      "Часть ключей береговых наблюдений остаётся конфликтующей и требует ручной проверки."
     ]
   },
   {
@@ -551,17 +551,17 @@
       {
         "name": "water_mean_level_missing_share",
         "count": null,
-        "details": "Share of rows missing resolved annual mean lower-section water level: 0.000."
+        "details": "Доля строк без восстановленного среднего годового уровня воды для нижнего участка: 0.000."
       },
       {
         "name": "water_max_level_missing_share",
         "count": null,
-        "details": "Share of rows missing resolved annual max lower-section water level: 0.000."
+        "details": "Доля строк без восстановленного максимального годового уровня воды для нижнего участка: 0.000."
       },
       {
         "name": "water_rows_without_full_date_share",
         "count": null,
-        "details": "Share of water rows without full obs_date: 1.000."
+        "details": "Доля строк воды без полной `obs_date`: 1.000."
       }
     ],
     "critical_blockers": []
@@ -601,12 +601,12 @@
       {
         "name": "wind_year_out_of_range",
         "count": 0,
-        "details": "Accepted range: 1950..2025."
+        "details": "Допустимый диапазон: 1950..2025."
       },
       {
         "name": "missing_obs_datetime_when_date_and_hour_present",
         "count": 0,
-        "details": "Rows with parsed year and hour should carry obs_datetime unless flagged invalid upstream."
+        "details": "Строки с распознанными годом и часом должны иметь `obs_datetime`, если только они не были помечены как недопустимые выше по пайплайну."
       }
     ],
     "critical_blockers": []

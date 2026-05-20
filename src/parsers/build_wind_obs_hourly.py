@@ -26,6 +26,16 @@ from .common import (
     safe_parse_date,
     setup_logging,
 )
+from src.qc_messages import (
+    wind_date_out_of_range_note,
+    wind_datetime_out_of_range_note,
+    wind_explicit_date_parse_failed,
+    wind_explicit_date_too_many_year_digits,
+    wind_partial_excel_date_invalid,
+    wind_partial_numeric_date_invalid,
+    wind_partial_text_date_invalid,
+    wind_row_without_reliable_date_note,
+)
 
 OUTPUT_COLUMNS = [
     "wind_obs_id",
@@ -78,9 +88,9 @@ def parse_explicit_wind_date(value: object) -> tuple[date | None, str | None]:
         parsed = safe_parse_date(text)
         if parsed is not None:
             return parsed, None
-        return None, f"Explicit date token {text!r} could not be parsed safely."
+        return None, wind_explicit_date_parse_failed(text)
     if re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{5,}", text):
-        return None, f"Explicit date token {text!r} has too many year digits and was rejected."
+        return None, wind_explicit_date_too_many_year_digits(text)
 
     if isinstance(value, (int, float)):
         parsed = safe_parse_date(value)
@@ -101,14 +111,14 @@ def parse_partial_day_month(value: object, year_hint: int | None) -> tuple[date 
             try:
                 return date(year_hint, value.month, value.day), None
             except ValueError:
-                return None, f"Excel partial date {value.isoformat()} was invalid after substituting the sheet year."
+                return None, wind_partial_excel_date_invalid(value, year_hint)
         return None, None
     if isinstance(value, date):
         if value.year == 1900:
             try:
                 return date(year_hint, value.month, value.day), None
             except ValueError:
-                return None, f"Excel partial date {value.isoformat()} was invalid after substituting the sheet year."
+                return None, wind_partial_excel_date_invalid(value, year_hint)
         return None, None
 
     text = clean_text(value)
@@ -122,7 +132,7 @@ def parse_partial_day_month(value: object, year_hint: int | None) -> tuple[date 
         try:
             return date(year_hint, month, day), None
         except ValueError:
-            return None, f"Partial numeric day.month token {text!r} was invalid."
+            return None, wind_partial_numeric_date_invalid(text)
 
     match = re.fullmatch(r"(\d{1,2})\.(\d{1,2})\.?", text)
     if not match:
@@ -132,7 +142,7 @@ def parse_partial_day_month(value: object, year_hint: int | None) -> tuple[date 
     try:
         return date(year_hint, month, day), None
     except ValueError:
-        return None, f"Partial text day.month token {text!r} was invalid."
+        return None, wind_partial_text_date_invalid(text)
 
 
 def is_reasonable_wind_date(obs_date: date | None) -> bool:
@@ -283,11 +293,11 @@ def build_wind_obs_hourly(output_path: Path | None = None) -> Path:
             if obs_date is None:
                 qc_flags.append("invalid_datetime")
                 if not parsed["date_note"]:
-                    qc_notes.append("Observation-like row was retained, but no reliable date could be reconstructed from the date cell.")
+                    qc_notes.append(wind_row_without_reliable_date_note())
                 counters["rows_with_date_error"] += 1
             elif not is_reasonable_wind_date(obs_date):
                 qc_flags.append("invalid_datetime")
-                qc_notes.append(f"Parsed date {obs_date.isoformat()} is outside the accepted range {WIND_DATE_MIN.isoformat()}..{WIND_DATE_MAX.isoformat()}.")
+                qc_notes.append(wind_date_out_of_range_note(obs_date, WIND_DATE_MIN, WIND_DATE_MAX))
                 obs_date = None
                 counters["rows_with_date_error"] += 1
 
@@ -305,7 +315,7 @@ def build_wind_obs_hourly(output_path: Path | None = None) -> Path:
             obs_datetime = combine_date_and_hour(obs_date, parsed["hour"]) if obs_date is not None else None
             if obs_datetime is not None and not is_reasonable_wind_year(obs_datetime.year):
                 qc_flags.append("invalid_datetime")
-                qc_notes.append(f"Parsed datetime {obs_datetime.isoformat()} is outside the accepted range.")
+                qc_notes.append(wind_datetime_out_of_range_note(obs_datetime))
                 obs_datetime = None
 
             is_missing = parsed["wind_speed_ms"] is None and not parsed["wind_dir_text"]

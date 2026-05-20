@@ -3,14 +3,36 @@ __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
 
 # Jupyter
 .ipynb_checkpoints/
-
-# Generated outputs
-
 
 # Local env
 .venv/
 venv/
 .env
+.env.*
+
+# Local logs and scratch files
+*.tmp
+*.bak
+tmp/
+temp/
+
+# Office temp files
+~$*.xlsx
+~$*.xls
+~$*.docx
+~$*.doc
+~$*.pptx
+
+# OS cruft
+.DS_Store
+Thumbs.db

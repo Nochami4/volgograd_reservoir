@@ -1,10 +1,13 @@
-# Project Rules For Future Agents
+# Правила проекта для будущих агентов
 
-- Do not modify files under `data/raw/`.
-- Build every dataset with scripts and CLI entrypoints, never by hand-editing outputs.
-- Do not impute missing raw values or invent replacements.
-- Keep every conclusion reproducible from committed code and raw inputs.
-- Write intermediate outputs only to `data/interim/`.
-- Write final derived outputs only to `data/processed/`.
-- Preserve explicit provenance fields such as `source_file`, `source_sheet`, and `source_row` whenever applicable.
-- When file structure is ambiguous, keep `qc_note` or `TODO` markers instead of guessing semantic meaning.
+Краткий контекст:
+репозиторий содержит воспроизводимый ETL/QC-проект по данным об абразии берегов Волгоградского водохранилища. Человекочитаемая документация и пояснения в производных слоях ведутся на русском языке, но технические имена колонок и машинные коды должны оставаться стабильными.
+
+- Не изменяйте файлы внутри `data/raw/`.
+- Любой датасет собирайте скриптами и CLI-entrypoint-ами, а не ручной правкой готовых outputs.
+- Не импутируйте пропуски raw-значений и не придумывайте им замену.
+- Любой вывод должен оставаться воспроизводимым из закоммиченного кода и исходных файлов.
+- Промежуточные результаты записывайте только в `data/interim/`.
+- Финальные производные результаты записывайте только в `data/processed/`.
+- Сохраняйте явные provenance-поля вроде `source_file`, `source_sheet` и `source_row`, когда они применимы.
+- Если структура источника неоднозначна, оставляйте `qc_note` или `TODO`, а не угадывайте смысл.

@@ -12,6 +12,15 @@ from urllib.request import urlopen
 import pandas as pd
 
 from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, relative_to_root, setup_logging
+from src.qc_messages import (
+    water_fill_gap_retained_note,
+    water_fill_master_retained_note,
+    wind_fill_local_context_only_note,
+    wind_fill_local_note,
+    wind_fill_noaa_note,
+    wind_fill_not_filled_note,
+    wind_fill_validation_unusable_note,
+)
 
 MASTER_DATASET_PATH = PROCESSED_DIR / "final_dataset_for_modeling.csv"
 ANALYSIS_READY_PATH = PROCESSED_DIR / "analysis_ready.csv"
@@ -297,24 +306,11 @@ def build_wind_enrichment(
     if noaa_max_fill_mask.any():
         enriched.loc[noaa_max_fill_mask, "max_wind_speed_ms"] = enriched.loc[noaa_max_fill_mask, "max_wind_speed_ms_noaa"]
 
-    local_note = (
-        "Exact-source interval aggregate copied from the current Kamyshin workbook layer; "
-        "screening-only interpretation still applies when coverage_wind is low."
-    )
-    local_context_note = (
-        "Local interval context is present in the current Kamyshin workbook layer, but the available rows did not yield a complete wind-speed summary for this interval."
-    )
-    noaa_note = (
-        "Filled from NOAA Global Hourly station 34363099999 (KAMYSIN) only where the local interval wind summary was missing; "
-        "timestamps were converted from UTC to Europe/Volgograd local dates before interval aggregation. "
-        "Exact-station metadata matched, but overlap with the local workbook remains limited, so this fill should be read with caution."
-    )
-    not_filled_note = (
-        "No validated exact-source or same-station compatible-source wind observations were available for this interval; the gap is left as-is."
-    )
-    validation_unusable_note = (
-        "NOAA same-station candidate was fetched but not accepted for filling because overlap validation stayed below the current compatibility threshold."
-    )
+    local_note = wind_fill_local_note()
+    local_context_note = wind_fill_local_context_only_note()
+    noaa_note = wind_fill_noaa_note()
+    not_filled_note = wind_fill_not_filled_note()
+    validation_unusable_note = wind_fill_validation_unusable_note()
 
     enriched["wind_fill_status"] = pd.NA
     enriched["wind_fill_source"] = pd.NA
@@ -392,9 +388,7 @@ def apply_water_fill_metadata(enriched_df: pd.DataFrame) -> tuple[pd.DataFrame, 
     enriched.loc[water_present_mask, "water_fill_source_tier"] = "LEVEL_A"
     enriched.loc[water_present_mask, "water_fill_method"] = "retained_existing_master_year_only_lower_section_context"
     enriched.loc[water_present_mask, "water_fill_confidence"] = "high_for_reported_annual_values"
-    enriched.loc[water_present_mask, "water_fill_validation_note"] = (
-        "Existing master water values were retained unchanged. They remain annual lower-section context only and should not be reinterpreted as site-local fully dated forcing."
-    )
+    enriched.loc[water_present_mask, "water_fill_validation_note"] = water_fill_master_retained_note()
 
     missing_mask = ~water_present_mask
     enriched.loc[missing_mask, "water_fill_status"] = "not_filled_no_valid_official_extension_found"
@@ -402,9 +396,7 @@ def apply_water_fill_metadata(enriched_df: pd.DataFrame) -> tuple[pd.DataFrame, 
     enriched.loc[missing_mask, "water_fill_source_tier"] = "none"
     enriched.loc[missing_mask, "water_fill_method"] = "left_missing"
     enriched.loc[missing_mask, "water_fill_confidence"] = "not_available"
-    enriched.loc[missing_mask, "water_fill_validation_note"] = (
-        "No additional official lower-section water series with clear provenance and compatible semantics was adopted in this run, so the master gap remains missing."
-    )
+    enriched.loc[missing_mask, "water_fill_validation_note"] = water_fill_gap_retained_note()
 
     stats = {
         "rows_with_master_water_context": int(water_present_mask.sum()),
@@ -429,84 +421,84 @@ def render_manifest(
     lines = [
         "# final_dataset_enriched_open_sources",
         "",
-        "## Dataset Role",
+        "## Роль набора данных",
         "",
-        "- Master dataset kept untouched: `data/processed/final_dataset_for_modeling.csv`",
-        "- Enriched companion dataset: `data/processed/final_dataset_enriched_open_sources.csv`",
-        "- Master file hash before build: " + master_hash_before,
-        "- Master file hash after build: " + master_hash_after,
-        "- Master changed during build: " + ("yes" if master_hash_before != master_hash_after else "no"),
+        "- Базовый основной набор сохраняется без изменений: `data/processed/final_dataset_for_modeling.csv`",
+        "- Дополнительный обогащённый набор: `data/processed/final_dataset_enriched_open_sources.csv`",
+        "- Хеш основного файла до сборки: " + master_hash_before,
+        "- Хеш основного файла после сборки: " + master_hash_after,
+        "- Изменился ли основной файл во время сборки: " + ("да" if master_hash_before != master_hash_after else "нет"),
         "",
-        "## Missingness Audit For Master",
+        "## Аудит пропусков в основном наборе",
         "",
-        "| column_name | missing_count | missing_share | candidate_for_enrichment | enrichment_domain | note |",
+        "| Колонка | Число пропусков | Доля пропусков | Кандидат на обогащение | Домен обогащения | Пояснение |",
         "| --- | ---: | ---: | --- | --- | --- |",
     ]
     for column in WATER_VALUE_COLUMNS + ["water_context_scope", "water_time_resolution"]:
         missing_count = int(master_df[column].isna().sum())
         missing_share = missing_count / len(master_df) if len(master_df) else 0.0
         note = (
-            "Existing year-only water context is missing because the current lower-section source covers 1986-2018 only."
+            "Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы."
             if column in WATER_VALUE_COLUMNS
-            else "Context flag can only be populated if an honest official water extension is found."
+            else "Контекстный флаг можно заполнить только при наличии прозрачного официального расширения водного ряда."
         )
         lines.append(
-            f"| `{column}` | {missing_count} | {missing_share:.3f} | yes | water | {note} |"
+            f"| `{column}` | {missing_count} | {missing_share:.3f} | да | вода | {note} |"
         )
     lines.extend(
         [
             "",
-            "Wind note: the master dataset contains no wind columns by design, so wind enrichment is additive in the enriched companion layer rather than a repair of an existing master column.",
+            "Примечание по ветру: в основном наборе нет ветровых колонок по проектному замыслу, поэтому ветровое обогащение добавляется только в дополнительный слой и не исправляет существующую колонку основного набора.",
             "",
-            "## Enrichment Rules",
+            "## Правила обогащения",
             "",
-            "- LEVEL A - exact-source enrichment: allowed for already curated local Kamyshin wind aggregates and for retaining the existing master water context unchanged.",
-            "- LEVEL B - same-station compatible-source enrichment: allowed only for the same Kamyshin station when metadata match is exact and overlap validation is acceptable; used here only to fill wind rows that were empty in the local baseline.",
-            "- LEVEL C - same-variable contextual carry-forward: allowed only for the existing year-only lower-section water context already present in master; no new carry-forward beyond current master semantics was introduced.",
-            "- LEVEL D - forbidden: no mean/median/KNN/ML imputation, no interpolation without domain basis, no station substitution without validation, no silent water extrapolation outside the known lower-section series.",
+            "- LEVEL A: точное обогащение из исходного источника; допускается для уже подготовленных локальных ветровых агрегатов по Камышину и для сохранения текущего основного водного контекста без изменений.",
+            "- LEVEL B: обогащение из совместимого источника по той же станции; допускается только для той же станции Камышин при точном совпадении метаданных и приемлемой проверке перекрытия; здесь использовано только для заполнения пустых ветровых строк локальной базы.",
+            "- LEVEL C: перенос контекста по той же переменной; допускается только для уже существующего в основном наборе годового контекста по нижнему участку; никаких новых переносов сверх текущей семантики основного набора не вводилось.",
+            "- LEVEL D: запрещено; без mean/median/KNN/ML-импутации, без интерполяции без предметного обоснования, без подмены станции без валидации и без тихой экстраполяции воды за пределы известного ряда по нижнему участку.",
             "",
-            "## Source Evaluation",
+            "## Оценка источников",
             "",
-            "| source | domain | station_or_scope_match | time_resolution | decision | note |",
+            "| Источник | Домен | Совпадение станции или области | Временное разрешение | Решение | Пояснение |",
             "| --- | --- | --- | --- | --- | --- |",
-            "| `data/raw/meteo/Камышин скорость и направление ветра.xlsx` via `analysis_ready.csv` | wind | exact project baseline | interval aggregates from local observations | used | Copied first and never overwritten. |",
-            f"| NOAA Global Hourly `{NOAA_STATION_CODE}` | wind | {NOAA_STATION_NAME} / `{validation.get('station_line', '').strip()}` | hourly/synoptic | {'used_for_fill_only' if validation.get('usable_for_fill') else 'not_used'} | Exact station metadata matched; fill is limited to rows missing in the local baseline. |",
-            "| NOAA GSOD | wind | same NOAA station family, but derived dataset | daily summary | rejected | Daily summaries derived from hourly data are not mixed into the current interval-level hourly-style logic automatically. |",
-            "| Meteostat | wind | exact Kamyshin station match not established reproducibly in this run | hourly/daily portal | rejected | Not used automatically without a transparent exact-station match. |",
-            "| HydroWeb / AISORI-M / EIP Rosgidromet | water | lower-section extension not established reproducibly in this run | unclear / access path not resolved for direct use | rejected | No new official water series was adopted, so master water gaps remain missing. |",
+            "| `data/raw/meteo/Камышин скорость и направление ветра.xlsx` через `analysis_ready.csv` | ветер | точная проектная базовая линия | интервальные агрегаты по локальным наблюдениям | использован | Скопировано в первую очередь и далее не перезаписывалось. |",
+            f"| NOAA Global Hourly `{NOAA_STATION_CODE}` | ветер | {NOAA_STATION_NAME} / `{validation.get('station_line', '').strip()}` | почасовой/синоптический ряд | {'использован только для заполнения' if validation.get('usable_for_fill') else 'не использован'} | Метаданные станции совпали точно; заполнение ограничено строками, пустыми в локальной базе. |",
+            "| NOAA GSOD | ветер | то же семейство станции NOAA, но производный набор | суточная сводка | отклонён | Суточные сводки, полученные из почасовых данных, не смешиваются автоматически с текущей интервальной логикой, ориентированной на почасовой источник. |",
+            "| Meteostat | ветер | точное воспроизводимое сопоставление со станцией Камышин в этой сборке не подтверждено | почасовой/суточный портал | отклонён | Автоматически не используется без прозрачного точного сопоставления станции. |",
+            "| HydroWeb / AISORI-M / EIP Rosgidromet | вода | воспроизводимое расширение ряда по нижнему участку в этой сборке не подтверждено | неясно / прямой путь доступа не подтверждён | отклонён | Новый официальный ряд воды не принимался, поэтому пропуски основного набора сохранены. |",
             "",
-            "## Wind Validation Summary",
+            "## Сводка проверки по ветру",
             "",
-            f"- Station match line: `{validation.get('station_line', '').strip()}`",
-            f"- Inventory years detected: {validation.get('inventory_years', [])}",
-            f"- Exact local-time overlap count: {validation.get('exact_overlap_count')}",
-            f"- Exact overlap median absolute error: {validation.get('exact_median_abs_error')}",
-            f"- Exact overlap correlation: {validation.get('exact_corr')}",
-            f"- Daily overlap count: {validation.get('daily_overlap_count')}",
-            f"- Daily mean absolute error: {validation.get('daily_mean_mae')}",
-            f"- Daily max absolute error: {validation.get('daily_max_mae')}",
-            f"- NOAA usable for fill under current rule: {validation.get('usable_for_fill')}",
+            f"- Строка совпадения станции: `{validation.get('station_line', '').strip()}`",
+            f"- Обнаруженные годы в реестре inventory: {validation.get('inventory_years', [])}",
+            f"- Число точных пересечений по локальному времени: {validation.get('exact_overlap_count')}",
+            f"- Медианная абсолютная ошибка на точном пересечении: {validation.get('exact_median_abs_error')}",
+            f"- Корреляция на точном пересечении: {validation.get('exact_corr')}",
+            f"- Число суточных пересечений: {validation.get('daily_overlap_count')}",
+            f"- Средняя абсолютная ошибка суточных средних: {validation.get('daily_mean_mae')}",
+            f"- Средняя абсолютная ошибка суточных максимумов: {validation.get('daily_max_mae')}",
+            f"- Допустим ли NOAA для заполнения по текущему правилу: {validation.get('usable_for_fill')}",
             "",
-            "## Fill Outcome",
+            "## Итоги заполнения",
             "",
-            f"- Master water rows missing any resolved water value: {missing_water_count}",
-            f"- Rows with local wind context copied from the current project source: {wind_stats['rows_with_local_wind_context']}",
-            f"- Rows with local exact-source wind speed summaries: {wind_stats['rows_with_local_wind_speed_summary']}",
-            f"- Rows with local context only (counts/coverage without complete speed summary): {wind_stats['rows_with_local_context_only']}",
-            f"- Rows additionally filled from NOAA same-station compatible source: {wind_stats['rows_filled_from_noaa']}",
-            f"- Rows still without wind mean/max after enrichment: {wind_stats['rows_without_wind_mean_after_enrichment']}",
-            f"- Rows still without any wind observations after enrichment: {wind_stats['rows_without_any_wind_obs_after_enrichment']}",
-            f"- Rows with retained master water context: {water_stats['rows_with_master_water_context']}",
-            f"- Rows where water gaps remain missing: {water_stats['rows_with_water_gap_retained']}",
+            f"- Строк в основном наборе, где отсутствует хотя бы одно восстановленное значение воды: {missing_water_count}",
+            f"- Строк с локальным ветровым контекстом, скопированным из текущего проектного источника: {wind_stats['rows_with_local_wind_context']}",
+            f"- Строк с локальными сводками по скорости ветра из точного источника: {wind_stats['rows_with_local_wind_speed_summary']}",
+            f"- Строк только с локальным контекстом (число наблюдений/покрытие без полной сводки скорости): {wind_stats['rows_with_local_context_only']}",
+            f"- Строк, дополнительно заполненных из совместимого NOAA-источника по той же станции: {wind_stats['rows_filled_from_noaa']}",
+            f"- Строк, где после обогащения всё ещё нет среднего/максимального ветра: {wind_stats['rows_without_wind_mean_after_enrichment']}",
+            f"- Строк, где после обогащения всё ещё нет вообще никаких ветровых наблюдений: {wind_stats['rows_without_any_wind_obs_after_enrichment']}",
+            f"- Строк с сохранённым основным водным контекстом: {water_stats['rows_with_master_water_context']}",
+            f"- Строк, где водные пропуски остались незаполненными: {water_stats['rows_with_water_gap_retained']}",
             "",
-            "## Open-Source References",
+            "## Проверенные внешние источники",
             "",
-            "- NOAA ISD station metadata: `https://www.ncei.noaa.gov/pub/data/noaa/isd-history.txt`",
-            "- NOAA ISD inventory: `https://www.ncei.noaa.gov/pub/data/noaa/isd-inventory.txt`",
-            f"- NOAA Global Hourly access pattern: `https://www.ncei.noaa.gov/data/global-hourly/access/{{year}}/{NOAA_STATION_CODE}.csv`",
-            "- NOAA ISD product page: `https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database`",
-            "- NOAA GSOD overview: `https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00516`",
-            "- EIP Rosgidromet portal checked for water-extension leads: `https://eip.meteo.ru/`",
+            "- Метаданные станции NOAA ISD: `https://www.ncei.noaa.gov/pub/data/noaa/isd-history.txt`",
+            "- Inventory NOAA ISD: `https://www.ncei.noaa.gov/pub/data/noaa/isd-inventory.txt`",
+            f"- Шаблон доступа NOAA Global Hourly: `https://www.ncei.noaa.gov/data/global-hourly/access/{{year}}/{NOAA_STATION_CODE}.csv`",
+            "- Страница продукта NOAA ISD: `https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database`",
+            "- Обзор NOAA GSOD: `https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00516`",
+            "- Портал ЕИП Росгидромета, проверенный на предмет расширения водного ряда: `https://eip.meteo.ru/`",
         ]
     )
 

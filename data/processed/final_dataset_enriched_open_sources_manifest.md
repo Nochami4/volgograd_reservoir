@@ -1,76 +1,76 @@
 # final_dataset_enriched_open_sources
 
-## Dataset Role
+## Роль набора данных
 
-- Master dataset kept untouched: `data/processed/final_dataset_for_modeling.csv`
-- Enriched companion dataset: `data/processed/final_dataset_enriched_open_sources.csv`
-- Master file hash before build: 73fab2780add22b30f174985bf92339f6ada9e79475b580db5391d792283fd12
-- Master file hash after build: 73fab2780add22b30f174985bf92339f6ada9e79475b580db5391d792283fd12
-- Master changed during build: no
+- Базовый основной набор сохраняется без изменений: `data/processed/final_dataset_for_modeling.csv`
+- Дополнительный обогащённый набор: `data/processed/final_dataset_enriched_open_sources.csv`
+- Хеш основного файла до сборки: ae7de24fd3b5786c52fa068a27e081b4cfc160b518f7d38072f7ee0b83c70b7b
+- Хеш основного файла после сборки: ae7de24fd3b5786c52fa068a27e081b4cfc160b518f7d38072f7ee0b83c70b7b
+- Изменился ли основной файл во время сборки: нет
 
-## Missingness Audit For Master
+## Аудит пропусков в основном наборе
 
-| column_name | missing_count | missing_share | candidate_for_enrichment | enrichment_domain | note |
+| Колонка | Число пропусков | Доля пропусков | Кандидат на обогащение | Домен обогащения | Пояснение |
 | --- | ---: | ---: | --- | --- | --- |
-| `mean_water_level_mean_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `max_water_level_mean_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `min_water_level_mean_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `range_water_level_mean_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `mean_water_level_max_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `max_water_level_max_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `min_water_level_max_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `range_water_level_max_annual_m_abs` | 123 | 0.214 | yes | water | Existing year-only water context is missing because the current lower-section source covers 1986-2018 only. |
-| `water_context_scope` | 123 | 0.214 | yes | water | Context flag can only be populated if an honest official water extension is found. |
-| `water_time_resolution` | 123 | 0.214 | yes | water | Context flag can only be populated if an honest official water extension is found. |
+| `mean_water_level_mean_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `max_water_level_mean_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `min_water_level_mean_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `range_water_level_mean_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `mean_water_level_max_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `max_water_level_max_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `min_water_level_max_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `range_water_level_max_annual_m_abs` | 123 | 0.214 | да | вода | Текущий годовой водный контекст отсутствует, потому что известный ряд по нижнему участку покрывает только 1986-2018 годы. |
+| `water_context_scope` | 123 | 0.214 | да | вода | Контекстный флаг можно заполнить только при наличии прозрачного официального расширения водного ряда. |
+| `water_time_resolution` | 123 | 0.214 | да | вода | Контекстный флаг можно заполнить только при наличии прозрачного официального расширения водного ряда. |
 
-Wind note: the master dataset contains no wind columns by design, so wind enrichment is additive in the enriched companion layer rather than a repair of an existing master column.
+Примечание по ветру: в основном наборе нет ветровых колонок по проектному замыслу, поэтому ветровое обогащение добавляется только в дополнительный слой и не исправляет существующую колонку основного набора.
 
-## Enrichment Rules
+## Правила обогащения
 
-- LEVEL A - exact-source enrichment: allowed for already curated local Kamyshin wind aggregates and for retaining the existing master water context unchanged.
-- LEVEL B - same-station compatible-source enrichment: allowed only for the same Kamyshin station when metadata match is exact and overlap validation is acceptable; used here only to fill wind rows that were empty in the local baseline.
-- LEVEL C - same-variable contextual carry-forward: allowed only for the existing year-only lower-section water context already present in master; no new carry-forward beyond current master semantics was introduced.
-- LEVEL D - forbidden: no mean/median/KNN/ML imputation, no interpolation without domain basis, no station substitution without validation, no silent water extrapolation outside the known lower-section series.
+- LEVEL A: точное обогащение из исходного источника; допускается для уже подготовленных локальных ветровых агрегатов по Камышину и для сохранения текущего основного водного контекста без изменений.
+- LEVEL B: обогащение из совместимого источника по той же станции; допускается только для той же станции Камышин при точном совпадении метаданных и приемлемой проверке перекрытия; здесь использовано только для заполнения пустых ветровых строк локальной базы.
+- LEVEL C: перенос контекста по той же переменной; допускается только для уже существующего в основном наборе годового контекста по нижнему участку; никаких новых переносов сверх текущей семантики основного набора не вводилось.
+- LEVEL D: запрещено; без mean/median/KNN/ML-импутации, без интерполяции без предметного обоснования, без подмены станции без валидации и без тихой экстраполяции воды за пределы известного ряда по нижнему участку.
 
-## Source Evaluation
+## Оценка источников
 
-| source | domain | station_or_scope_match | time_resolution | decision | note |
+| Источник | Домен | Совпадение станции или области | Временное разрешение | Решение | Пояснение |
 | --- | --- | --- | --- | --- | --- |
-| `data/raw/meteo/Камышин скорость и направление ветра.xlsx` via `analysis_ready.csv` | wind | exact project baseline | interval aggregates from local observations | used | Copied first and never overwritten. |
-| NOAA Global Hourly `34363099999` | wind | KAMYSIN / `343630 99999 KAMYSIN                       RS            +50.067 +045.367 +0119.0 19320101 20250725` | hourly/synoptic | not_used | Exact station metadata matched; fill is limited to rows missing in the local baseline. |
-| NOAA GSOD | wind | same NOAA station family, but derived dataset | daily summary | rejected | Daily summaries derived from hourly data are not mixed into the current interval-level hourly-style logic automatically. |
-| Meteostat | wind | exact Kamyshin station match not established reproducibly in this run | hourly/daily portal | rejected | Not used automatically without a transparent exact-station match. |
-| HydroWeb / AISORI-M / EIP Rosgidromet | water | lower-section extension not established reproducibly in this run | unclear / access path not resolved for direct use | rejected | No new official water series was adopted, so master water gaps remain missing. |
+| `data/raw/meteo/Камышин скорость и направление ветра.xlsx` через `analysis_ready.csv` | ветер | точная проектная базовая линия | интервальные агрегаты по локальным наблюдениям | использован | Скопировано в первую очередь и далее не перезаписывалось. |
+| NOAA Global Hourly `34363099999` | ветер | KAMYSIN / `343630 99999 KAMYSIN                       RS            +50.067 +045.367 +0119.0 19320101 20250725` | почасовой/синоптический ряд | не использован | Метаданные станции совпали точно; заполнение ограничено строками, пустыми в локальной базе. |
+| NOAA GSOD | ветер | то же семейство станции NOAA, но производный набор | суточная сводка | отклонён | Суточные сводки, полученные из почасовых данных, не смешиваются автоматически с текущей интервальной логикой, ориентированной на почасовой источник. |
+| Meteostat | ветер | точное воспроизводимое сопоставление со станцией Камышин в этой сборке не подтверждено | почасовой/суточный портал | отклонён | Автоматически не используется без прозрачного точного сопоставления станции. |
+| HydroWeb / AISORI-M / EIP Rosgidromet | вода | воспроизводимое расширение ряда по нижнему участку в этой сборке не подтверждено | неясно / прямой путь доступа не подтверждён | отклонён | Новый официальный ряд воды не принимался, поэтому пропуски основного набора сохранены. |
 
-## Wind Validation Summary
+## Сводка проверки по ветру
 
-- Station match line: `343630 99999 KAMYSIN                       RS            +50.067 +045.367 +0119.0 19320101 20250725`
-- Inventory years detected: [2020, 2021, 2022, 2023, 2024, 2025]
-- Exact local-time overlap count: 6
-- Exact overlap median absolute error: 1.0
-- Exact overlap correlation: -0.225924028528766
-- Daily overlap count: 8
-- Daily mean absolute error: 4.695982142857143
-- Daily max absolute error: 4.875
-- NOAA usable for fill under current rule: False
+- Строка совпадения станции: `343630 99999 KAMYSIN                       RS            +50.067 +045.367 +0119.0 19320101 20250725`
+- Обнаруженные годы в реестре inventory: [2020, 2021, 2022, 2023, 2024, 2025]
+- Число точных пересечений по локальному времени: 6
+- Медианная абсолютная ошибка на точном пересечении: 1.0
+- Корреляция на точном пересечении: -0.225924028528766
+- Число суточных пересечений: 8
+- Средняя абсолютная ошибка суточных средних: 4.695982142857143
+- Средняя абсолютная ошибка суточных максимумов: 4.875
+- Допустим ли NOAA для заполнения по текущему правилу: False
 
-## Fill Outcome
+## Итоги заполнения
 
-- Master water rows missing any resolved water value: 123
-- Rows with local wind context copied from the current project source: 96
-- Rows with local exact-source wind speed summaries: 56
-- Rows with local context only (counts/coverage without complete speed summary): 40
-- Rows additionally filled from NOAA same-station compatible source: 0
-- Rows still without wind mean/max after enrichment: 519
-- Rows still without any wind observations after enrichment: 479
-- Rows with retained master water context: 452
-- Rows where water gaps remain missing: 123
+- Строк в основном наборе, где отсутствует хотя бы одно восстановленное значение воды: 123
+- Строк с локальным ветровым контекстом, скопированным из текущего проектного источника: 96
+- Строк с локальными сводками по скорости ветра из точного источника: 56
+- Строк только с локальным контекстом (число наблюдений/покрытие без полной сводки скорости): 40
+- Строк, дополнительно заполненных из совместимого NOAA-источника по той же станции: 0
+- Строк, где после обогащения всё ещё нет среднего/максимального ветра: 519
+- Строк, где после обогащения всё ещё нет вообще никаких ветровых наблюдений: 479
+- Строк с сохранённым основным водным контекстом: 452
+- Строк, где водные пропуски остались незаполненными: 123
 
-## Open-Source References
+## Проверенные внешние источники
 
-- NOAA ISD station metadata: `https://www.ncei.noaa.gov/pub/data/noaa/isd-history.txt`
-- NOAA ISD inventory: `https://www.ncei.noaa.gov/pub/data/noaa/isd-inventory.txt`
-- NOAA Global Hourly access pattern: `https://www.ncei.noaa.gov/data/global-hourly/access/{year}/34363099999.csv`
-- NOAA ISD product page: `https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database`
-- NOAA GSOD overview: `https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00516`
-- EIP Rosgidromet portal checked for water-extension leads: `https://eip.meteo.ru/`
+- Метаданные станции NOAA ISD: `https://www.ncei.noaa.gov/pub/data/noaa/isd-history.txt`
+- Inventory NOAA ISD: `https://www.ncei.noaa.gov/pub/data/noaa/isd-inventory.txt`
+- Шаблон доступа NOAA Global Hourly: `https://www.ncei.noaa.gov/data/global-hourly/access/{year}/34363099999.csv`
+- Страница продукта NOAA ISD: `https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database`
+- Обзор NOAA GSOD: `https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00516`
+- Портал ЕИП Росгидромета, проверенный на предмет расширения водного ряда: `https://eip.meteo.ru/`

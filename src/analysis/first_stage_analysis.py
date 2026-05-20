@@ -13,6 +13,7 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
 
 from src.parsers.common import INTERIM_DIR, PROCESSED_DIR, REPORTS_DIR, merge_with_checks, relative_to_root, setup_logging
+from src.qc_messages import duplicate_conflict_profile_note
 
 ANALYSIS_SAFE_COLUMNS = [
     "interval_id",
@@ -485,9 +486,9 @@ def load_analysis_safe_subset() -> pd.DataFrame:
         )
         duplicate_flags["has_conflicting_shoreline_duplicates"] = True
         duplicate_flags["duplicate_conflict_note"] = duplicate_flags.apply(
-            lambda row: (
-                f"В исходном shoreline-слое для профиля есть {int(row['conflicting_duplicate_group_count'])} конфликтующих duplicate-групп(ы); "
-                f"даты ключей: {row['duplicate_conflict_obs_dates']}. Эти строки не удалялись молча и должны учитываться как источник осторожности."
+            lambda row: duplicate_conflict_profile_note(
+                int(row["conflicting_duplicate_group_count"]),
+                str(row["duplicate_conflict_obs_dates"]).replace("missing_obs_date", "дата отсутствует"),
             ),
             axis=1,
         )

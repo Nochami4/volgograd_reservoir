@@ -1,34 +1,34 @@
-# QC Summary
+# Сводка QC
 
-## Critical blockers before scientific analysis
+## Критические ограничения перед научной интерпретацией
 
-- `data/processed/analysis_ready.csv`: Wind coverage is below the 0.8 threshold for many shoreline intervals.
-- `data/processed/shoreline_observations.csv`: Some shoreline observation keys remain conflicting and require manual review.
+- `data/processed/analysis_ready.csv`: Для многих береговых интервалов покрытие ветром остаётся ниже порога 0.8.
+- `data/processed/shoreline_observations.csv`: Часть ключей береговых наблюдений остаётся конфликтующей и требует ручной проверки.
 
-## Why tasks 3/5/6 are not analysis-safe yet
+## Почему задачи 3/5/6 пока не считаются аналитически безопасными
 
-- Intervals with `coverage_wind >= 0.8`: 0
-- Intervals with `coverage_wind > 0`: 101
-- Wind years currently present in `wind_obs_hourly.csv`: [2011, 2021, 2022, 2023, 2024, 2025]
-- Task families that rely on interval-level wind forcing remain draft until the wind time series is extended or matched to intervals more completely.
+- Интервалы с `coverage_wind >= 0.8`: 0
+- Интервалы с `coverage_wind > 0`: 101
+- Годы ветровых наблюдений, которые сейчас есть в `wind_obs_hourly.csv`: [2011, 2021, 2022, 2023, 2024, 2025]
+- Семейства задач, опирающиеся на интервальный ветер как на фактор, пока остаются черновыми, пока временной ряд не будет расширен или лучше сопоставлен с интервалами.
 
-## Dataset-specific Diagnostics
+## Диагностика по наборам данных
 
-- `base_points.csv`: 16 rows; unresolved `site_id`: 0; point_status distribution: {'original': 15, 'refined': 1}.
-- `water_levels_raw.csv`: missing share for resolved lower-section mean/max columns = 0.000/0.000; rows without full date = 1.000.
-- Water levels are now decoded as annual mean/max values for the lower reservoir section, but they remain year-only section-level context.
-- Sites without any extracted water rows: none.
-- `shoreline_duplicate_report.csv`: 3 duplicate key group(s), including 3 conflicting group(s).
-- `site_scope_review.csv`: 0 site(s) still marked `needs_review`.
+- `base_points.csv`: 16 строк; неразрешённых `site_id`: 0; распределение `point_status`: {'original': 15, 'refined': 1}.
+- `water_levels_raw.csv`: доля пропусков в восстановленных средних/максимальных годовых уровнях нижнего участка = 0.000/0.000; строк без полной даты = 1.000.
+- Уровни воды теперь явно расшифрованы как средние и максимальные годовые значения по нижнему участку, но всё ещё остаются годовым контекстом без полной даты наблюдения.
+- Участки без каких-либо извлечённых строк воды: нет.
+- `shoreline_duplicate_report.csv`: 3 групп дублирующихся ключей, включая 3 конфликтующих групп(ы).
+- `site_scope_review.csv`: 0 участок(ов) всё ещё помечен(о) как `needs_review`.
 
-| File | Rows | Columns | Duplicate rows | Duplicate keys | Key columns |
+| Файл | Строк | Колонок | Дубли строк | Дубли ключей | Ключевые колонки |
 | --- | ---: | ---: | ---: | ---: | --- |
 | `data/processed/analysis_ready.csv` | 587 | 60 | 0 | 0 | interval_id |
-| `data/processed/analysis_safe_subset.csv` | 575 | 53 | 0 | n/a | n/a |
+| `data/processed/analysis_safe_subset.csv` | 575 | 53 | 0 | н/д | н/д |
 | `data/processed/base_points.csv` | 16 | 21 | 0 | 0 | base_point_id |
-| `data/processed/base_points_current.csv` | 16 | 20 | 0 | n/a | n/a |
-| `data/processed/base_points_history.csv` | 21 | 20 | 0 | n/a | n/a |
-| `data/processed/final_dataset_enriched_open_sources.csv` | 575 | 54 | 0 | n/a | n/a |
+| `data/processed/base_points_current.csv` | 16 | 20 | 0 | н/д | н/д |
+| `data/processed/base_points_history.csv` | 21 | 20 | 0 | н/д | н/д |
+| `data/processed/final_dataset_enriched_open_sources.csv` | 575 | 54 | 0 | н/д | н/д |
 | `data/processed/final_dataset_for_modeling.csv` | 575 | 38 | 0 | 0 | interval_id |
 | `data/processed/interval_metrics.csv` | 587 | 17 | 0 | 0 | interval_id |
 | `data/processed/profiles.csv` | 33 | 9 | 0 | 0 | profile_id |
@@ -37,45 +37,45 @@
 | `data/processed/water_levels_raw.csv` | 330 | 16 | 0 | 0 | water_obs_id |
 | `data/processed/wind_obs_hourly.csv` | 1596 | 20 | 0 | 0 | wind_obs_id |
 
-## Additional Targeted Checks
+## Дополнительные адресные проверки
 
 ### `data/processed/analysis_ready.csv`
 
-- `analysis_low_coverage_wind_share`: n/a. Share of intervals flagged LOW_COVERAGE_WIND: 1.000.
-- `analysis_low_coverage_water_share`: n/a. Share of intervals flagged LOW_COVERAGE_WATER: 0.283.
-- `analysis_intervals_with_any_wind`: 101. Intervals with coverage_wind > 0.
-- `analysis_intervals_with_adequate_wind`: 0. Intervals with coverage_wind >= 0.8.
+- `analysis_low_coverage_wind_share`: н/д. Доля интервалов с флагом `LOW_COVERAGE_WIND`: 1.000.
+- `analysis_low_coverage_water_share`: н/д. Доля интервалов с флагом `LOW_COVERAGE_WATER`: 0.283.
+- `analysis_intervals_with_any_wind`: 101. Интервалы, где `coverage_wind > 0`.
+- `analysis_intervals_with_adequate_wind`: 0. Интервалы, где `coverage_wind >= 0.8`.
 
 ### `data/processed/base_points.csv`
 
-- `base_points_empty`: 0. An empty base_points layer means shoreline geometry remains only partially anchored.
-- `base_points_missing_site_id_share`: n/a. Share of base-point rows without resolved site_id: 0.000.
-- `base_points_point_status_distribution`: n/a. Point-status distribution: {'original': 15, 'refined': 1}.
+- `base_points_empty`: 0. Пустой слой `base_points` означает, что береговая геометрия остаётся привязанной лишь частично.
+- `base_points_missing_site_id_share`: н/д. Доля строк базисных точек без определённого `site_id`: 0.000.
+- `base_points_point_status_distribution`: н/д. Распределение `point_status`: {'original': 15, 'refined': 1}.
 
 ### `data/processed/final_dataset_for_modeling.csv`
 
-- `final_dataset_all_empty_columns`: 0. All-empty columns: none.
+- `final_dataset_all_empty_columns`: 0. Полностью пустые колонки: нет.
 
 ### `data/processed/shoreline_observations.csv`
 
-- `shoreline_duplicate_groups`: 3. Duplicate observation keys are described in data/interim/shoreline_duplicate_report.csv.
+- `shoreline_duplicate_groups`: 3. Группы дублирующихся ключей наблюдений описаны в `data/interim/shoreline_duplicate_report.csv`.
 
 ### `data/processed/water_levels_raw.csv`
 
-- `water_mean_level_missing_share`: n/a. Share of rows missing resolved annual mean lower-section water level: 0.000.
-- `water_max_level_missing_share`: n/a. Share of rows missing resolved annual max lower-section water level: 0.000.
-- `water_rows_without_full_date_share`: n/a. Share of water rows without full obs_date: 1.000.
+- `water_mean_level_missing_share`: н/д. Доля строк без восстановленного среднего годового уровня воды для нижнего участка: 0.000.
+- `water_max_level_missing_share`: н/д. Доля строк без восстановленного максимального годового уровня воды для нижнего участка: 0.000.
+- `water_rows_without_full_date_share`: н/д. Доля строк воды без полной `obs_date`: 1.000.
 
 ### `data/processed/wind_obs_hourly.csv`
 
-- `wind_year_out_of_range`: 0. Accepted range: 1950..2025.
-- `missing_obs_datetime_when_date_and_hour_present`: 0. Rows with parsed year and hour should carry obs_datetime unless flagged invalid upstream.
+- `wind_year_out_of_range`: 0. Допустимый диапазон: 1950..2025.
+- `missing_obs_datetime_when_date_and_hour_present`: 0. Строки с распознанными годом и часом должны иметь `obs_datetime`, если только они не были помечены как недопустимые выше по пайплайну.
 
-## Missingness By Column
+## Пропуски по колонкам
 
 ### `data/processed/analysis_ready.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `brow_pos_end_m` | 0.000 |
 | `brow_pos_start_m` | 0.000 |
@@ -140,7 +140,7 @@
 
 ### `data/processed/analysis_safe_subset.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `calc_method` | 0.000 |
 | `conflicting_duplicate_group_count` | 0.000 |
@@ -198,7 +198,7 @@
 
 ### `data/processed/base_points.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `accuracy_m` | 0.938 |
 | `base_point_id` | 0.000 |
@@ -224,7 +224,7 @@
 
 ### `data/processed/base_points_current.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `accuracy_m` | 0.938 |
 | `base_point_name_norm` | 0.000 |
@@ -249,7 +249,7 @@
 
 ### `data/processed/base_points_history.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `accuracy_m` | 0.857 |
 | `base_point_name_norm` | 0.000 |
@@ -274,7 +274,7 @@
 
 ### `data/processed/final_dataset_enriched_open_sources.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `conflicting_duplicate_group_count` | 0.000 |
 | `coverage_water` | 0.000 |
@@ -333,7 +333,7 @@
 
 ### `data/processed/final_dataset_for_modeling.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `conflicting_duplicate_group_count` | 0.000 |
 | `coverage_water` | 0.000 |
@@ -376,7 +376,7 @@
 
 ### `data/processed/interval_metrics.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `brow_pos_end_m` | 0.000 |
 | `brow_pos_start_m` | 0.000 |
@@ -398,7 +398,7 @@
 
 ### `data/processed/profiles.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `end_date` | 0.000 |
 | `n_observations` | 0.000 |
@@ -412,7 +412,7 @@
 
 ### `data/processed/shoreline_observations.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `brow_position_pn_m` | 0.134 |
 | `brow_position_raw_m` | 0.122 |
@@ -436,7 +436,7 @@
 
 ### `data/processed/sites.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `exposure_sectors_text` | 0.000 |
 | `lithology_class` | 0.000 |
@@ -452,7 +452,7 @@
 
 ### `data/processed/water_levels_raw.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `is_missing` | 0.000 |
 | `missing_reason` | 1.000 |
@@ -473,7 +473,7 @@
 
 ### `data/processed/wind_obs_hourly.csv`
 
-| Column | Missing share |
+| Колонка | Доля пропусков |
 | --- | ---: |
 | `day` | 0.001 |
 | `hour` | 0.000 |
@@ -496,11 +496,11 @@
 | `wind_speed_ms` | 0.014 |
 | `year` | 0.001 |
 
-## Wind Diagnostics
+## Диагностика ветрового слоя
 
-- Valid wind observations: 1595
-- Rows flagged invalid datetime: 1
-- Year distribution: {2011: 893, 2021: 6, 2022: 8, 2023: 1, 2024: 4, 2025: 683}
-- Source-sheet distribution: {2011: 894, 2025: 683, 2022: 8, 2021: 6, 2024: 4, 2023: 1}
-- Years outside 1950..2025: none
-- Sheets with suspiciously few rows (<24): {2022: 8, 2021: 6, 2024: 4, 2023: 1}
+- Корректных ветровых наблюдений с `obs_datetime`: 1595
+- Строк с флагом `invalid_datetime`: 1
+- Распределение по годам: {2011: 893, 2021: 6, 2022: 8, 2023: 1, 2024: 4, 2025: 683}
+- Распределение по исходным листам: {2011: 894, 2025: 683, 2022: 8, 2021: 6, 2024: 4, 2023: 1}
+- Годы вне диапазона 1950..2025: нет
+- Листы с подозрительно малым числом строк (<24): {2022: 8, 2021: 6, 2024: 4, 2023: 1}

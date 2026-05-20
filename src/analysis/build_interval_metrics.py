@@ -8,6 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.parsers.common import PROCESSED_DIR, relative_to_root, setup_logging
+from src.qc_messages import interval_aggregated_points_note, interval_duplicate_dates_excluded_note
 
 OUTPUT_COLUMNS = [
     "interval_id",
@@ -109,15 +110,13 @@ def compute_interval_metrics(observations: pd.DataFrame) -> pd.DataFrame:
             qc_notes: list[str] = []
             if start["n_raw_points_used"] > 1 or end["n_raw_points_used"] > 1:
                 qc_flags.append("AGGREGATED_RAW_POINTS")
-                qc_notes.append("Brow positions were averaged within each observation date before interval differencing.")
+                qc_notes.append(interval_aggregated_points_note())
             if start["source_qc"] or end["source_qc"]:
                 qc_flags.append("SOURCE_QC_PRESENT")
             excluded_duplicate_dates = duplicate_summary.get((site_id, profile_id), 0)
             if excluded_duplicate_dates > 0:
                 qc_flags.append("DUPLICATE_KEY_DATES_EXCLUDED")
-                qc_notes.append(
-                    f"{excluded_duplicate_dates} conflicting duplicate observation-date key(s) were excluded before interval construction; see data/interim/shoreline_duplicate_report.csv."
-                )
+                qc_notes.append(interval_duplicate_dates_excluded_note(excluded_duplicate_dates))
 
             records.append(
                 {
